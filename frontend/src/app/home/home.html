@@ -1,0 +1,275 @@
+<div class="home-page">
+  <!-- Welcome Header -->
+  <div class="welcome-section">
+    <div class="welcome-header">
+      <h1>Welcome to CrewUp, {{currentUser?.name || 'User'}}!</h1>
+      <p class="welcome-subtitle">You're successfully logged in. Here's your personalized dashboard.</p>
+    </div>
+  </div>
+
+  <!-- Main Content Grid -->
+  <div class="main-grid">
+    <!-- Left Side - Analytics (1/3) -->
+    <div class="analytics-panel">
+      <div class="panel-header">
+        <h2>Analytics</h2>
+        <span class="panel-subtitle">Your activity overview</span>
+      </div>
+
+      <div class="analytics-cards">
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z" stroke="#0A2540" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>127</h3>
+            <p>Posts Created</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="10" stroke="#00C49A" stroke-width="2"/>
+              <path d="8 12l2 2 4-4" stroke="#00C49A" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>1.2k</h3>
+            <p>Total Likes</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke="#0A2540" stroke-width="2"/>
+              <circle cx="9" cy="7" r="4" stroke="#0A2540" stroke-width="2"/>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke="#0A2540" stroke-width="2"/>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke="#0A2540" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>45</h3>
+            <p>Followers</p>
+          </div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-icon">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+              <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="#00C49A" stroke-width="2"/>
+            </svg>
+          </div>
+          <div class="stat-info">
+            <h3>89</h3>
+            <p>Comments</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Activity Chart -->
+      <div class="activity-chart">
+        <h3>Weekly Activity</h3>
+        <div class="chart-placeholder">
+          <div class="chart-bars">
+            <div class="bar" style="height: 60%"></div>
+            <div class="bar" style="height: 80%"></div>
+            <div class="bar" style="height: 45%"></div>
+            <div class="bar" style="height: 90%"></div>
+            <div class="bar" style="height: 70%"></div>
+            <div class="bar" style="height: 65%"></div>
+            <div class="bar" style="height: 85%"></div>
+          </div>
+          <div class="chart-labels">
+            <span>Mon</span>
+            <span>Tue</span>
+            <span>Wed</span>
+            <span>Thu</span>
+            <span>Fri</span>
+            <span>Sat</span>
+            <span>Sun</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="quick-actions">
+        <h3>Quick Actions</h3>
+        <button class="action-btn primary">Create Post</button>
+        <button class="action-btn secondary">View Profile</button>
+        <button class="action-btn outline">Settings</button>
+        <button class="action-btn danger" (click)="logout()">Logout</button>
+      </div>
+    </div>
+
+    <!-- Right Side - Posts (2/3) -->
+    <div class="posts-section">
+      <!-- Create Post -->
+      <div class="create-post">
+        <div class="create-post-header">
+          <div class="user-avatar">
+            <span>{{(currentUser?.name || 'U')[0].toUpperCase()}}</span>
+          </div>
+          <input type="text" placeholder="What's on your mind, {{currentUser?.name}}?" class="post-input">
+        </div>
+        <div class="create-post-actions">
+          <button class="post-action-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+              <circle cx="8.5" cy="8.5" r="1.5" stroke="currentColor" stroke-width="2"/>
+              <path d="M21 15l-5-5L5 21" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Photo
+          </button>
+          <button class="post-action-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <polygon points="23 7 16 12 23 17 23 7" stroke="currentColor" stroke-width="2"/>
+              <rect x="1" y="5" width="15" height="14" rx="2" ry="2" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Video
+          </button>
+          <button class="post-action-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+              <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+              <path d="M12 1v6m0 6v6m11-7h-6m-6 0H1" stroke="currentColor" stroke-width="2"/>
+            </svg>
+            Location
+          </button>
+          <button class="post-btn">Post</button>
+        </div>
+      </div>
+
+      <!-- Posts Feed -->
+      <div class="posts-feed">
+        <!-- Sample Post 1 -->
+        <div class="post-card">
+          <div class="post-header">
+            <div class="post-user-info">
+              <div class="user-avatar">JD</div>
+              <div class="user-details">
+                <h4>John Doe</h4>
+                <span class="post-time">2 hours ago</span>
+              </div>
+            </div>
+            <button class="post-menu">⋯</button>
+          </div>
+          <div class="post-content">
+            <p>Just launched our new project! Excited to share this milestone with the team. The hard work is finally paying off! 🚀</p>
+            <div class="post-image">
+              <div class="image-placeholder">📸 Project Launch Image</div>
+            </div>
+          </div>
+          <div class="post-actions">
+            <button class="post-action like">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              24 likes
+            </button>
+            <button class="post-action comment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              5 comments
+            </button>
+            <button class="post-action share">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M8.59 13.51l6.83 3.98" stroke="currentColor" stroke-width="2"/>
+                <path d="M15.41 6.51l-6.82 3.98" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Share
+            </button>
+          </div>
+        </div>
+
+        <!-- Sample Post 2 -->
+        <div class="post-card">
+          <div class="post-header">
+            <div class="post-user-info">
+              <div class="user-avatar">SM</div>
+              <div class="user-details">
+                <h4>Sarah Miller</h4>
+                <span class="post-time">4 hours ago</span>
+              </div>
+            </div>
+            <button class="post-menu">⋯</button>
+          </div>
+          <div class="post-content">
+            <p>Team meeting was incredibly productive today! Love working with such talented people. Here are some key takeaways from our brainstorming session.</p>
+          </div>
+          <div class="post-actions">
+            <button class="post-action like">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              18 likes
+            </button>
+            <button class="post-action comment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              3 comments
+            </button>
+            <button class="post-action share">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M8.59 13.51l6.83 3.98" stroke="currentColor" stroke-width="2"/>
+                <path d="M15.41 6.51l-6.82 3.98" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Share
+            </button>
+          </div>
+        </div>
+
+        <!-- Sample Post 3 -->
+        <div class="post-card">
+          <div class="post-header">
+            <div class="post-user-info">
+              <div class="user-avatar">{{(currentUser?.name || 'U')[0].toUpperCase()}}</div>
+              <div class="user-details">
+                <h4>{{currentUser?.name || 'User'}}</h4>
+                <span class="post-time">1 day ago</span>
+              </div>
+            </div>
+            <button class="post-menu">⋯</button>
+          </div>
+          <div class="post-content">
+            <p>Just joined CrewUp! Excited to connect with amazing teams and collaborate on interesting projects. Looking forward to this journey! 🎉</p>
+          </div>
+          <div class="post-actions">
+            <button class="post-action like">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              12 likes
+            </button>
+            <button class="post-action comment">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              7 comments
+            </button>
+            <button class="post-action share">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+                <circle cx="18" cy="5" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="6" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                <circle cx="18" cy="19" r="3" stroke="currentColor" stroke-width="2"/>
+                <path d="M8.59 13.51l6.83 3.98" stroke="currentColor" stroke-width="2"/>
+                <path d="M15.41 6.51l-6.82 3.98" stroke="currentColor" stroke-width="2"/>
+              </svg>
+              Share
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
