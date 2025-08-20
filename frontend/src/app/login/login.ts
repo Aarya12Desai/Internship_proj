@@ -14,22 +14,38 @@ export class Login {
   email = '';
   password = '';
   errorMessage = '';
+  isLoading = false;
 
   constructor(private authService: Auth) {}
 
   onSubmit(event: Event) {
     event.preventDefault();
     this.errorMessage = '';
+    this.isLoading = true;
 
     if (!this.email || !this.password) {
       this.errorMessage = 'Please fill in all fields';
+      this.isLoading = false;
       return;
     }
 
-    const success = this.authService.login(this.email, this.password);
-    if (!success) {
-      this.errorMessage = 'Invalid email or password';
-    }
-    // If successful, the auth service will handle navigation
+    this.authService.login(this.email, this.password).subscribe({
+      next: (response) => {
+        console.log('Login successful:', response);
+        this.isLoading = false;
+        // Navigation is handled in the auth service
+      },
+      error: (error) => {
+        console.error('Login failed:', error);
+        this.isLoading = false;
+        if (error.status === 401) {
+          this.errorMessage = 'Invalid email or password';
+        } else if (error.status === 0) {
+          this.errorMessage = 'Unable to connect to server. Please try again.';
+        } else {
+          this.errorMessage = error.error?.message || 'Login failed. Please try again.';
+        }
+      }
+    });
   }
 }

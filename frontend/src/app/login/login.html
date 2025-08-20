@@ -12,7 +12,13 @@
       <label for="password">Password</label>
       <input type="password" id="password" name="password" [(ngModel)]="password" required>
 
-      <button type="submit">Login</button>
+      <button type="submit" [disabled]="isLoading">
+        @if (isLoading) {
+          <span>Logging in...</span>
+        } @else {
+          <span>Login</span>
+        }
+      </button>
     </form>
     <p>Don't have an account? <a routerLink="/signup">Sign up</a></p>
   </div>

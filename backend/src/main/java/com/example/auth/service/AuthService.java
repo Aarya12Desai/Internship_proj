@@ -1,5 +1,14 @@
 package com.example.auth.service;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.auth.dto.JwtResponse;
 import com.example.auth.dto.LoginRequest;
 import com.example.auth.dto.RegisterRequest;
@@ -9,14 +18,6 @@ import com.example.auth.model.Role;
 import com.example.auth.model.User;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.util.JwtUtil;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @Transactional
@@ -68,18 +69,19 @@ public class AuthService {
     }
     
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
+        // First find the user by email to get the username
+        User user = userRepository.findByEmail(loginRequest.getEmail())
+            .orElseThrow(() -> new UserNotFoundException("User not found with email: " + loginRequest.getEmail()));
+        
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
-                loginRequest.getUsername(),
+                user.getUsername(), // Use the username for authentication
                 loginRequest.getPassword()
             )
         );
         
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String jwt = jwtUtil.generateJwtToken(userDetails.getUsername());
-        
-        User user = userRepository.findByUsername(userDetails.getUsername())
-            .orElseThrow(() -> new UserNotFoundException("User not found"));
         
         return new JwtResponse(
             jwt,
