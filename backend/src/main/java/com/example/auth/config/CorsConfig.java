@@ -19,11 +19,9 @@ public class CorsConfig {
         // Allow Angular dev server and production domains
         configuration.setAllowedOrigins(Arrays.asList(
             "http://localhost:4200",
-            "http://localhost:4201",
-            "http://127.0.0.1:4200",
-            "http://127.0.0.1:4201"
+            "http://localhost:4201"
         ));
-        
+                
         // Allow all HTTP methods
         configuration.setAllowedMethods(Arrays.asList("*"));
         

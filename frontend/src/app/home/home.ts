@@ -1,9 +1,10 @@
 import { Component } from '@angular/core';
 import { Auth } from '../services/auth';
+import { PostsFeedComponent } from '../components/posts-feed.component';
 
 @Component({
   selector: 'app-home',
-  imports: [],
+  imports: [PostsFeedComponent],
   templateUrl: './home.html',
   styleUrl: './home.css'
 })

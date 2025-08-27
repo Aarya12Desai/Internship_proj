@@ -15,6 +15,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.web.cors.CorsConfigurationSource;
 
 import com.example.auth.service.CustomUserDetailsService;
 
@@ -49,15 +50,18 @@ public class SecurityConfig {
         return new ProviderManager(authenticationProvider());
     }
     
+    @Autowired
+    private CorsConfigurationSource corsConfigurationSource;
+    
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         return http
             .csrf(csrf -> csrf.disable())
+            .cors(cors -> cors.configurationSource(corsConfigurationSource))
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(authz -> authz
                 .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/test/**")).permitAll()
-                .requestMatchers(new AntPathRequestMatcher("/h2-console/**")).permitAll() // For H2 console
                 .requestMatchers(new AntPathRequestMatcher("/error")).permitAll() // For error pages
                 .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll() // For actuator endpoints
                 .anyRequest().authenticated()

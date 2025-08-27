@@ -1,7 +1,7 @@
 
 import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
+import { RouterLink, Router } from '@angular/router';
 import { Auth } from '../services/auth';
 
 @Component({
@@ -17,7 +17,7 @@ export class Signup {
   errorMessage = '';
   isLoading = false;
 
-  constructor(private authService: Auth) {}
+  constructor(private authService: Auth, private router: Router) {}
 
   onSubmit(event: Event) {
     event.preventDefault();
@@ -44,6 +44,10 @@ export class Signup {
           next: (loginResponse) => {
             console.log('Auto-login successful:', loginResponse);
             this.isLoading = false;
+            // Small delay to ensure token is stored, then navigate
+            setTimeout(() => {
+              this.router.navigate(['/home']);
+            }, 100);
           },
           error: (loginError) => {
             console.error('Auto-login failed:', loginError);
