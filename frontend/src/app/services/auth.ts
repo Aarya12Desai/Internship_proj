@@ -1,6 +1,6 @@
 import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, of } from 'rxjs';
+import { Observable, of, BehaviorSubject } from 'rxjs';
 import { tap, catchError, map } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { isPlatformBrowser } from '@angular/common';
@@ -11,6 +11,9 @@ import { isPlatformBrowser } from '@angular/common';
 export class Auth {
   private API_BASE_URL = 'http://localhost:8081/api/auth';
   private isBrowser: boolean;
+  // Observable auth state for UI to react to login/logout
+  public authState: BehaviorSubject<boolean>;
+  public currentUser$: BehaviorSubject<any>;
 
   constructor(
     private http: HttpClient, 
@@ -18,23 +21,13 @@ export class Auth {
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
+  this.authState = new BehaviorSubject<boolean>(this.isLoggedIn);
+  this.currentUser$ = new BehaviorSubject<any>(this.currentUser);
   }
 
   signup(username: string, email: string, password: string): Observable<any> {
     const signupData = { username, email, password };
     return this.http.post<any>(`${this.API_BASE_URL}/register`, signupData);
-  }
-
-  signupStudent(username: string, email: string, password: string, firstName: string, lastName: string, rollNumber: string): Observable<any> {
-    const signupData = { username, email, password, firstName, lastName, rollNumber };
-    return this.http.post<any>(`${this.API_BASE_URL}/register/student`, signupData);
-  }
-
-  signupCompany(username: string, email: string, password: string, companyName: string, companyWebsite: string, contactName?: string, contactPhone?: string): Observable<any> {
-    const signupData: any = { username, email, password, companyName, companyWebsite };
-    if (contactName) signupData.companyContactName = contactName;
-    if (contactPhone) signupData.companyContactPhone = contactPhone;
-    return this.http.post<any>(`${this.API_BASE_URL}/register/company`, signupData);
   }
 
   login(email: string, password: string, role?: string): Observable<any> {
@@ -51,6 +44,13 @@ export class Auth {
           localStorage.setItem('user_role', response.role);
           console.log('Authentication data stored successfully');
           console.log('Token stored:', localStorage.getItem('access_token') ? 'YES' : 'NO');
+          // emit new auth state and current user
+          this.authState.next(true);
+          this.currentUser$.next({
+            email: response.email,
+            username: response.username,
+            role: response.role
+          });
         }
       }),
       catchError(error => {
@@ -68,7 +68,10 @@ export class Auth {
       localStorage.removeItem('username');
       localStorage.removeItem('user_role');
     }
-    this.router.navigate(['/']);
+  // update observable state so UI updates immediately
+  if (this.authState) this.authState.next(false);
+  if (this.currentUser$) this.currentUser$.next(null);
+  this.router.navigate(['/']);
   }
 
   get isLoggedIn(): boolean {

@@ -5,42 +5,9 @@
       @if (errorMessage) {
         <div class="error-message">{{ errorMessage }}</div>
       }
-      
+
       <label for="name">Username</label>
       <input type="text" id="name" name="name" [(ngModel)]="name" required>
-
-      <label for="role">Register as</label>
-      <select id="role" name="role" [(ngModel)]="role">
-        <option value="student">Student</option>
-        <option value="company">Company</option>
-      </select>
-
-      <!-- Student fields -->
-      <div *ngIf="role === 'student'">
-        <label for="firstName">First name</label>
-        <input type="text" id="firstName" name="firstName" [(ngModel)]="firstName" required>
-
-        <label for="lastName">Last name</label>
-        <input type="text" id="lastName" name="lastName" [(ngModel)]="lastName" required>
-
-        <label for="rollNumber">Roll number</label>
-        <input type="text" id="rollNumber" name="rollNumber" [(ngModel)]="rollNumber" required>
-      </div>
-
-      <!-- Company fields -->
-      <div *ngIf="role === 'company'">
-        <label for="companyName">Company name</label>
-        <input type="text" id="companyName" name="companyName" [(ngModel)]="companyName" required>
-
-        <label for="companyWebsite">Website (optional)</label>
-        <input type="text" id="companyWebsite" name="companyWebsite" [(ngModel)]="companyWebsite">
-        
-  <label for="companyContactName">Contact person</label>
-  <input type="text" id="companyContactName" name="companyContactName" [(ngModel)]="companyContactName" required>
-
-  <label for="companyContactPhone">Contact phone</label>
-  <input type="tel" id="companyContactPhone" name="companyContactPhone" [(ngModel)]="companyContactPhone" required>
-      </div>
 
       <label for="email">Email</label>
       <input type="email" id="email" name="email" [(ngModel)]="email" required>

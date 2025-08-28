@@ -74,56 +74,7 @@ public class AuthService {
         );
     }
 
-    public JwtResponse registerStudent(com.example.auth.dto.StudentRegisterRequest req) {
-        // Basic validation: username, email, password required
-        if (req.getUsername() == null || req.getUsername().isBlank()
-            || req.getEmail() == null || req.getEmail().isBlank()
-            || req.getPassword() == null || req.getPassword().isBlank()) {
-            throw new IllegalArgumentException("username, email and password are required for student registration");
-        }
-        if (userRepository.existsByUsername(req.getUsername())) {
-            throw new UserAlreadyExistsException("Username is already taken!");
-        }
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new UserAlreadyExistsException("Email is already in use!");
-        }
-
-        User user = new User(req.getUsername(), req.getEmail(), passwordEncoder.encode(req.getPassword()));
-        user.setRole(Role.STUDENT);
-        user.setStudentFirstName(req.getFirstName());
-        user.setStudentLastName(req.getLastName());
-        user.setStudentRollNumber(req.getRollNumber());
-        userRepository.save(user);
-
-        String jwt = jwtUtil.generateJwtToken(user.getUsername());
-        return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
-    }
-
-    public JwtResponse registerCompany(com.example.auth.dto.CompanyRegisterRequest req) {
-        // Basic validation: username, email, password required
-        if (req.getUsername() == null || req.getUsername().isBlank()
-            || req.getEmail() == null || req.getEmail().isBlank()
-            || req.getPassword() == null || req.getPassword().isBlank()) {
-            throw new IllegalArgumentException("username, email and password are required for company registration");
-        }
-        if (userRepository.existsByUsername(req.getUsername())) {
-            throw new UserAlreadyExistsException("Username is already taken!");
-        }
-        if (userRepository.existsByEmail(req.getEmail())) {
-            throw new UserAlreadyExistsException("Email is already in use!");
-        }
-
-        User user = new User(req.getUsername(), req.getEmail(), passwordEncoder.encode(req.getPassword()));
-        user.setRole(Role.COMPANY);
-        user.setCompanyName(req.getCompanyName());
-    user.setCompanyWebsite(req.getCompanyWebsite());
-    user.setCompanyContactName(req.getCompanyContactName());
-    user.setCompanyContactPhone(req.getCompanyContactPhone());
-        userRepository.save(user);
-
-        String jwt = jwtUtil.generateJwtToken(user.getUsername());
-        return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
-    }
+    // Student/company-specific registration removed. Use registerUser(RegisterRequest) instead.
     
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         // First find the user by email to get the username

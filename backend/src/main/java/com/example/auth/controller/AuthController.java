@@ -40,44 +40,7 @@ public class AuthController {
         }
     }
 
-    @PostMapping("/register/student")
-    public ResponseEntity<?> registerStudent(@RequestBody com.example.auth.dto.StudentRegisterRequest req) {
-        try {
-            JwtResponse jwtResponse = authService.registerStudent(req);
-            return ResponseEntity.ok(jwtResponse);
-        } catch (UserAlreadyExistsException e) {
-            return ResponseEntity.badRequest()
-                .body(new MessageResponse("Error: " + e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                .body(new MessageResponse("Error: " + e.getMessage()));
-        }
-    }
-
-    @PostMapping("/register/company")
-    public ResponseEntity<?> registerCompany(@RequestBody com.example.auth.dto.CompanyRegisterRequest req) {
-        try {
-            JwtResponse jwtResponse = authService.registerCompany(req);
-            return ResponseEntity.ok(jwtResponse);
-        } catch (UserAlreadyExistsException e) {
-            return ResponseEntity.badRequest()
-                .body(new MessageResponse("Error: " + e.getMessage()));
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.badRequest()
-                .body(new MessageResponse("Error: " + e.getMessage()));
-        }
-    }
-
-    // Aliases for frontend-friendly routes
-    @PostMapping("/signupstudent")
-    public ResponseEntity<?> signupStudent(@RequestBody com.example.auth.dto.StudentRegisterRequest req) {
-        return registerStudent(req);
-    }
-
-    @PostMapping("/signupcompany")
-    public ResponseEntity<?> signupCompany(@RequestBody com.example.auth.dto.CompanyRegisterRequest req) {
-        return registerCompany(req);
-    }
+    // Student/company registration endpoints have been removed. Use /register with RegisterRequest instead.
     
     @PostMapping("/login")
     public ResponseEntity<?> authenticateUser(@RequestBody LoginRequest loginRequest) {

@@ -2,13 +2,14 @@
 import { Component, signal } from '@angular/core';
 import { RouterOutlet, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { CommonModule, AsyncPipe } from '@angular/common';
 import { Auth } from './services/auth';
 import { Notifications } from './services/notifications';
 import { Messages } from './services/messages';
 
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet, RouterLink, FormsModule],
+  imports: [RouterOutlet, RouterLink, FormsModule, CommonModule, AsyncPipe],
   templateUrl: './app.html',
   styleUrl: './app.css'
 })
@@ -16,7 +17,7 @@ export class App {
   protected readonly title = signal('frontend');
 
   constructor(
-    private authService: Auth,
+    public authService: Auth,
     private notificationsService: Notifications,
     private messagesService: Messages
   ) {}
