@@ -12,6 +12,8 @@ export const routes: Routes = [
   { path: '', component: Landing },
   { path: 'login', component: LoginComponent, canActivate: [GuestGuard] },
   { path: 'signup', component: Signup, canActivate: [GuestGuard] },
+  { path: 'signup/student', component: Signup, canActivate: [GuestGuard], data: { type: 'student' } },
+  { path: 'signup/company', component: Signup, canActivate: [GuestGuard], data: { type: 'company' } },
   { path: 'home', component: Home, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'messages', component: Messages, canActivate: [authGuard] },

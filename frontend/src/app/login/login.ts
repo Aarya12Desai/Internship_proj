@@ -23,7 +23,8 @@ export class LoginComponent {
   ) {
     this.loginForm = this.fb.group({
       email: ['', [Validators.required, Validators.email]],
-      password: ['', [Validators.required, Validators.minLength(6)]]
+  password: ['', [Validators.required, Validators.minLength(6)]],
+  role: ['student']
     });
   }
 
@@ -32,10 +33,10 @@ export class LoginComponent {
       this.isLoading = true;
       this.errorMessage = '';
 
-      const formData = this.loginForm.value;
-      console.log('Attempting login for:', formData.email);
+  const formData = this.loginForm.value;
+  console.log('Attempting login for:', formData.email, 'as', formData.role);
       
-      this.auth.login(formData.email, formData.password).subscribe({
+  this.auth.login(formData.email, formData.password, formData.role).subscribe({
         next: (response) => {
           console.log('Login successful, navigating to home...');
           this.isLoading = false;

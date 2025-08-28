@@ -36,6 +36,12 @@ public class AuthService {
     private JwtUtil jwtUtil;
     
     public JwtResponse registerUser(RegisterRequest registerRequest) {
+        // Basic validation
+        if (registerRequest.getUsername() == null || registerRequest.getUsername().isBlank()
+            || registerRequest.getEmail() == null || registerRequest.getEmail().isBlank()
+            || registerRequest.getPassword() == null || registerRequest.getPassword().isBlank()) {
+            throw new IllegalArgumentException("username, email and password are required");
+        }
         // Check if username exists
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
             throw new UserAlreadyExistsException("Username is already taken!");
@@ -67,12 +73,74 @@ public class AuthService {
             user.getRole().name()
         );
     }
+
+    public JwtResponse registerStudent(com.example.auth.dto.StudentRegisterRequest req) {
+        // Basic validation: username, email, password required
+        if (req.getUsername() == null || req.getUsername().isBlank()
+            || req.getEmail() == null || req.getEmail().isBlank()
+            || req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new IllegalArgumentException("username, email and password are required for student registration");
+        }
+        if (userRepository.existsByUsername(req.getUsername())) {
+            throw new UserAlreadyExistsException("Username is already taken!");
+        }
+        if (userRepository.existsByEmail(req.getEmail())) {
+            throw new UserAlreadyExistsException("Email is already in use!");
+        }
+
+        User user = new User(req.getUsername(), req.getEmail(), passwordEncoder.encode(req.getPassword()));
+        user.setRole(Role.STUDENT);
+        user.setStudentFirstName(req.getFirstName());
+        user.setStudentLastName(req.getLastName());
+        user.setStudentRollNumber(req.getRollNumber());
+        userRepository.save(user);
+
+        String jwt = jwtUtil.generateJwtToken(user.getUsername());
+        return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
+    }
+
+    public JwtResponse registerCompany(com.example.auth.dto.CompanyRegisterRequest req) {
+        // Basic validation: username, email, password required
+        if (req.getUsername() == null || req.getUsername().isBlank()
+            || req.getEmail() == null || req.getEmail().isBlank()
+            || req.getPassword() == null || req.getPassword().isBlank()) {
+            throw new IllegalArgumentException("username, email and password are required for company registration");
+        }
+        if (userRepository.existsByUsername(req.getUsername())) {
+            throw new UserAlreadyExistsException("Username is already taken!");
+        }
+        if (userRepository.existsByEmail(req.getEmail())) {
+            throw new UserAlreadyExistsException("Email is already in use!");
+        }
+
+        User user = new User(req.getUsername(), req.getEmail(), passwordEncoder.encode(req.getPassword()));
+        user.setRole(Role.COMPANY);
+        user.setCompanyName(req.getCompanyName());
+    user.setCompanyWebsite(req.getCompanyWebsite());
+    user.setCompanyContactName(req.getCompanyContactName());
+    user.setCompanyContactPhone(req.getCompanyContactPhone());
+        userRepository.save(user);
+
+        String jwt = jwtUtil.generateJwtToken(user.getUsername());
+        return new JwtResponse(jwt, user.getId(), user.getUsername(), user.getEmail(), user.getRole().name());
+    }
     
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
         // First find the user by email to get the username
         User user = userRepository.findByEmail(loginRequest.getEmail())
             .orElseThrow(() -> new UserNotFoundException("User not found with email: " + loginRequest.getEmail()));
-        
+        // If loginRequest specifies a role, ensure it matches the stored user role
+        if (loginRequest.getRole() != null) {
+            try {
+                Role requested = Role.valueOf(loginRequest.getRole().toUpperCase());
+                if (requested != user.getRole()) {
+                    throw new UserNotFoundException("No user with that role and email");
+                }
+            } catch (IllegalArgumentException e) {
+                throw new UserNotFoundException("Invalid role specified");
+            }
+        }
+
         Authentication authentication = authenticationManager.authenticate(
             new UsernamePasswordAuthenticationToken(
                 user.getUsername(), // Use the username for authentication

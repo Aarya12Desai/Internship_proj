@@ -25,8 +25,21 @@ export class Auth {
     return this.http.post<any>(`${this.API_BASE_URL}/register`, signupData);
   }
 
-  login(email: string, password: string): Observable<any> {
-    const loginData = { email, password };
+  signupStudent(username: string, email: string, password: string, firstName: string, lastName: string, rollNumber: string): Observable<any> {
+    const signupData = { username, email, password, firstName, lastName, rollNumber };
+    return this.http.post<any>(`${this.API_BASE_URL}/register/student`, signupData);
+  }
+
+  signupCompany(username: string, email: string, password: string, companyName: string, companyWebsite: string, contactName?: string, contactPhone?: string): Observable<any> {
+    const signupData: any = { username, email, password, companyName, companyWebsite };
+    if (contactName) signupData.companyContactName = contactName;
+    if (contactPhone) signupData.companyContactPhone = contactPhone;
+    return this.http.post<any>(`${this.API_BASE_URL}/register/company`, signupData);
+  }
+
+  login(email: string, password: string, role?: string): Observable<any> {
+    const loginData: any = { email, password };
+    if (role) loginData.role = role;
     
     return this.http.post<any>(`${this.API_BASE_URL}/login`, loginData).pipe(
       tap(response => {
