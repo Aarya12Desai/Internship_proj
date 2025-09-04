@@ -61,12 +61,12 @@
   background: #27ae60;
 }
 
-.stat-card.closed .stat-icon {
-  background: #e74c3c;
+.stat-card.progress .stat-icon {
+  background: #f39c12;
 }
 
-.stat-card.applications .stat-icon {
-  background: #f39c12;
+.stat-card.completed .stat-icon {
+  background: #27ae60;
 }
 
 .stat-content h3 {

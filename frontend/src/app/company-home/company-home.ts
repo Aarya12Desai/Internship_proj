@@ -20,41 +20,41 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">
-            <i class="fas fa-briefcase"></i>
+            <i class="fas fa-project-diagram"></i>
           </div>
           <div class="stat-content">
-            <h3>{{stats.totalJobs || 0}}</h3>
-            <p>Total Jobs</p>
+            <h3>{{stats.totalProjects || 0}}</h3>
+            <p>Total Projects</p>
           </div>
         </div>
         
         <div class="stat-card active">
           <div class="stat-icon">
-            <i class="fas fa-play-circle"></i>
+            <i class="fas fa-folder-open"></i>
           </div>
           <div class="stat-content">
-            <h3>{{stats.activeJobs || 0}}</h3>
-            <p>Active Jobs</p>
+            <h3>{{stats.openProjects || 0}}</h3>
+            <p>Open Projects</p>
           </div>
         </div>
         
-        <div class="stat-card closed">
+        <div class="stat-card progress">
           <div class="stat-icon">
-            <i class="fas fa-times-circle"></i>
+            <i class="fas fa-cogs"></i>
           </div>
           <div class="stat-content">
-            <h3>{{stats.closedJobs || 0}}</h3>
-            <p>Closed Jobs</p>
+            <h3>{{stats.inProgressProjects || 0}}</h3>
+            <p>In Progress</p>
           </div>
         </div>
         
-        <div class="stat-card applications">
+        <div class="stat-card completed">
           <div class="stat-icon">
-            <i class="fas fa-users"></i>
+            <i class="fas fa-check-circle"></i>
           </div>
           <div class="stat-content">
-            <h3>0</h3>
-            <p>Applications</p>
+            <h3>{{stats.completedProjects || 0}}</h3>
+            <p>Completed</p>
           </div>
         </div>
       </div>
@@ -63,13 +63,13 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
       <div class="quick-actions-section">
         <h2>Quick Actions</h2>
         <div class="actions-grid">
-          <button class="action-btn primary" (click)="navigateToCreateJob()">
+          <button class="action-btn primary" (click)="navigateToCreateProject()">
             <i class="fas fa-plus"></i>
-            Post New Job
+            Post New Project
           </button>
-          <button class="action-btn secondary" (click)="navigateToJobs()">
+          <button class="action-btn secondary" (click)="navigateToProjects()">
             <i class="fas fa-list"></i>
-            Manage Jobs
+            Manage Projects
           </button>
           <button class="action-btn tertiary" (click)="navigateToProfile()">
             <i class="fas fa-building"></i>
@@ -82,40 +82,41 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
         </div>
       </div>
 
-      <!-- Recent Jobs -->
-      <div class="recent-jobs-section">
+      <!-- Recent Projects -->
+      <div class="recent-projects-section">
         <div class="section-header">
-          <h2>Recent Job Postings</h2>
-          <button class="view-all-btn" (click)="navigateToJobs()">View All</button>
+          <h2>Recent Project Postings</h2>
+          <button class="view-all-btn" (click)="navigateToProjects()">View All</button>
         </div>
         
-        <div *ngIf="recentJobs.length === 0" class="empty-state">
-          <i class="fas fa-briefcase"></i>
-          <h3>No job postings yet</h3>
-          <p>Create your first job posting to start attracting candidates</p>
-          <button class="create-job-btn" (click)="navigateToCreateJob()">
-            Create Job Posting
+        <div *ngIf="recentProjects.length === 0" class="empty-state">
+          <i class="fas fa-project-diagram"></i>
+          <h3>No project postings yet</h3>
+          <p>Create your first project posting to start attracting collaborators</p>
+          <button class="create-project-btn" (click)="navigateToCreateProject()">
+            Create Project Posting
           </button>
         </div>
         
-        <div *ngIf="recentJobs.length > 0" class="jobs-grid">
-          <div *ngFor="let job of recentJobs" class="job-card">
-            <div class="job-header">
-              <h3>{{job.title}}</h3>
-              <span class="job-status" [ngClass]="job.status?.toLowerCase()">
-                {{job.status}}
+        <div *ngIf="recentProjects.length > 0" class="projects-grid">
+          <div *ngFor="let project of recentProjects" class="project-card">
+            <div class="project-header">
+              <h3>{{project.title}}</h3>
+              <span class="project-status" [ngClass]="project.status?.toLowerCase()">
+                {{project.status}}
               </span>
             </div>
-            <p class="job-description">{{job.description | slice:0:100}}{{job.description?.length > 100 ? '...' : ''}}</p>
-            <div class="job-details">
-              <span class="job-type">{{job.jobType}}</span>
-              <span class="job-location">{{job.location}}</span>
+            <p class="project-description">{{project.description | slice:0:100}}{{project.description?.length > 100 ? '...' : ''}}</p>
+            <div class="project-details">
+              <span class="project-type">{{project.projectType}}</span>
+              <span class="project-location">{{project.location}}</span>
+              <span *ngIf="project.durationMonths" class="project-duration">{{project.durationMonths}} months</span>
             </div>
-            <div class="job-actions">
-              <button class="edit-btn" (click)="editJob(job.id)">
+            <div class="project-actions">
+              <button class="edit-btn" (click)="editProject(project.id)">
                 <i class="fas fa-edit"></i> Edit
               </button>
-              <button class="view-btn" (click)="viewJob(job.id)">
+              <button class="view-btn" (click)="viewProject(project.id)">
                 <i class="fas fa-eye"></i> View
               </button>
             </div>
@@ -133,18 +134,18 @@ export class CompanyHomeComponent implements OnInit {
 
   companyName = '';
   stats = {
-    totalJobs: 0,
-    activeJobs: 0,
-    closedJobs: 0,
-    applications: 0
+    totalProjects: 0,
+    openProjects: 0,
+    inProgressProjects: 0,
+    completedProjects: 0
   };
-  recentJobs: any[] = [];
+  recentProjects: any[] = [];
   isLoading = true;
 
   ngOnInit() {
     this.loadCompanyData();
     this.loadDashboardStats();
-    this.loadRecentJobs();
+    this.loadRecentProjects();
   }
 
   loadCompanyData() {
@@ -158,7 +159,7 @@ export class CompanyHomeComponent implements OnInit {
     const token = this.authService.token;
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any>('http://localhost:8081/api/company-jobs/dashboard-stats', { headers })
+    this.http.get<any>('http://localhost:8081/api/company-projects/dashboard-stats', { headers })
       .subscribe({
         next: (response) => {
           this.stats = response;
@@ -169,29 +170,29 @@ export class CompanyHomeComponent implements OnInit {
       });
   }
 
-  loadRecentJobs() {
+  loadRecentProjects() {
     const token = this.authService.token;
     const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
 
-    this.http.get<any[]>('http://localhost:8081/api/company-jobs/my-jobs', { headers })
+    this.http.get<any[]>('http://localhost:8081/api/company-projects/my-projects', { headers })
       .subscribe({
-        next: (jobs) => {
-          this.recentJobs = jobs.slice(0, 3); // Show only first 3 recent jobs
+        next: (projects) => {
+          this.recentProjects = projects.slice(0, 3); // Show only first 3 recent projects
           this.isLoading = false;
         },
         error: (error) => {
-          console.error('Error loading recent jobs:', error);
+          console.error('Error loading recent projects:', error);
           this.isLoading = false;
         }
       });
   }
 
-  navigateToCreateJob() {
-    this.router.navigate(['/company/create-job']);
+  navigateToCreateProject() {
+    this.router.navigate(['/company/create-project']);
   }
 
-  navigateToJobs() {
-    this.router.navigate(['/company/jobs']);
+  navigateToProjects() {
+    this.router.navigate(['/company/projects']);
   }
 
   navigateToProfile() {
@@ -202,11 +203,11 @@ export class CompanyHomeComponent implements OnInit {
     this.router.navigate(['/company/applications']);
   }
 
-  editJob(jobId: number) {
-    this.router.navigate(['/company/edit-job', jobId]);
+  editProject(projectId: number) {
+    this.router.navigate(['/company/edit-project', projectId]);
   }
 
-  viewJob(jobId: number) {
-    this.router.navigate(['/company/job', jobId]);
+  viewProject(projectId: number) {
+    this.router.navigate(['/company/project', projectId]);
   }
 }
