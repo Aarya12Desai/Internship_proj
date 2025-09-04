@@ -6,13 +6,13 @@ import { Auth } from '../services/auth';
 import { ProjectNotificationService } from '../services/project-notification.service';
 
 @Component({
-  selector: 'app-login',
+  selector: 'app-company-login',
   standalone: true,
   imports: [CommonModule, ReactiveFormsModule, RouterModule],
-  templateUrl: './login.html',
-  styleUrl: './login.css'
+  templateUrl: './company-login.html',
+  styleUrl: './company-login.css'
 })
-export class LoginComponent {
+export class CompanyLoginComponent {
   loginForm: FormGroup;
   isLoading = false;
   errorMessage = '';
@@ -35,28 +35,29 @@ export class LoginComponent {
       this.errorMessage = '';
 
       const formData = this.loginForm.value;
-      console.log('Attempting user login for:', formData.email);
+      console.log('Attempting company login for:', formData.email);
       
-      this.auth.login(formData.email, formData.password, 'USER').subscribe({
+      // Add role to specify company login
+      this.auth.login(formData.email, formData.password, 'COMPANY').subscribe({
         next: (response) => {
-          console.log('User login successful, navigating to home...');
+          console.log('Company login successful, navigating to dashboard...');
           // Fetch notifications after login
           this.projectNotificationService.refreshUserNotifications();
           this.isLoading = false;
           
-          // Verify the user role is USER
-          if (response.role === 'USER') {
+          // Verify the user role is COMPANY
+          if (response.role === 'COMPANY') {
             setTimeout(() => {
-              this.router.navigate(['/home']);
+              this.router.navigate(['/company/home']);
             }, 100);
           } else {
-            this.errorMessage = 'This account is registered as a company. Please use the company login.';
+            this.errorMessage = 'This account is not registered as a company. Please use the regular login.';
           }
         },
         error: (error) => {
           this.isLoading = false;
-          console.error('User login failed:', error);
-          this.errorMessage = error.error?.message || 'Login failed. Please check your credentials or ensure you have a user account.';
+          console.error('Company login failed:', error);
+          this.errorMessage = error.error?.message || 'Login failed. Please check your credentials or ensure you have a company account.';
         }
       });
     }

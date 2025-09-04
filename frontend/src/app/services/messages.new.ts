@@ -70,52 +70,39 @@ export class Messages {
       return;
     }
     const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-    this.http.get<Message[]>(`http://localhost:8081/api/messages/inbox`, { headers })
+    this.http.get<any[]>(`http://localhost:8081/api/messages/inbox`, { headers })
       .subscribe({
         next: (messages) => {
-          // Get current user id from auth
-          const currentUser = this.auth.currentUser;
-          const currentUserId = currentUser && currentUser.id ? currentUser.id : null;
+          // Group messages by participant
           const conversationsMap: { [key: string]: Conversation } = {};
           messages.forEach(msg => {
-            // The participant is the other user (not the current user)
-            let participantId = msg.senderId;
-            let participantName = msg.senderName;
-            if (currentUserId && msg.senderId === currentUserId) {
-              // If the current user is the sender, try to use recipient fields if available (future-proof)
-              if ((msg as any).recipientId) {
-                participantId = (msg as any).recipientId;
-              }
-              if ((msg as any).recipientName) {
-                participantName = (msg as any).recipientName;
-              }
-            }
+            const participantId = msg.sender.id;
             if (!conversationsMap[participantId]) {
               conversationsMap[participantId] = {
                 id: `conv-${participantId}`,
                 participantId: participantId,
-                participantName: participantName,
-                participantAvatar: participantName ? participantName.substring(0, 2).toUpperCase() : '',
+                participantName: msg.sender.username,
+                participantAvatar: msg.sender.username ? msg.sender.username.substring(0,2).toUpperCase() : '',
                 lastMessage: msg.content,
-                lastMessageTime: new Date(msg.timestamp),
-                unreadCount: 0,
+                lastMessageTime: new Date(msg.createdAt),
+                unreadCount: 0, // You can update this if you have read status
                 online: false,
                 messages: []
               };
             }
             conversationsMap[participantId].messages.push({
               id: msg.id,
-              senderId: msg.senderId,
-              senderName: msg.senderName,
-              senderAvatar: msg.senderName ? msg.senderName.substring(0, 2).toUpperCase() : '',
+              senderId: msg.sender.id,
+              senderName: msg.sender.username,
+              senderAvatar: msg.sender.username ? msg.sender.username.substring(0,2).toUpperCase() : '',
               content: msg.content,
-              timestamp: new Date(msg.timestamp),
-              read: true,
-              type: msg.type || 'text'
+              timestamp: new Date(msg.createdAt),
+              read: true, // Update if you have read status
+              type: 'text'
             });
             // Update last message
             conversationsMap[participantId].lastMessage = msg.content;
-            conversationsMap[participantId].lastMessageTime = new Date(msg.timestamp);
+            conversationsMap[participantId].lastMessageTime = new Date(msg.createdAt);
           });
           this.conversationsSignal.set(Object.values(conversationsMap));
         },

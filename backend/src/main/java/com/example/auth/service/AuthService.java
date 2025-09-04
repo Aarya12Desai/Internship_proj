@@ -9,6 +9,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.auth.dto.CompanyRegisterRequest;
 import com.example.auth.dto.JwtResponse;
 import com.example.auth.dto.LoginRequest;
 import com.example.auth.dto.RegisterRequest;
@@ -74,6 +75,48 @@ public class AuthService {
         );
     }
 
+    public JwtResponse registerCompany(CompanyRegisterRequest request) {
+        // Basic validation
+        if (request.getCompanyName() == null || request.getCompanyName().isBlank()
+                || request.getEmail() == null || request.getEmail().isBlank()
+                || request.getPassword() == null || request.getPassword().isBlank()) {
+            throw new IllegalArgumentException("companyName, email and password are required");
+        }
+        
+        // Check if email exists
+        if (userRepository.existsByEmail(request.getEmail())) {
+            throw new UserAlreadyExistsException("Email is already in use!");
+        }
+        
+        // Create new company user
+        User user = new User();
+        user.setUsername(request.getCompanyName()); // Use company name as username
+        user.setEmail(request.getEmail());
+        user.setPassword(passwordEncoder.encode(request.getPassword()));
+        user.setRole(Role.COMPANY);
+        user.setCompanyName(request.getCompanyName());
+        user.setCompanyWebsite(request.getCompanyWebsite());
+        user.setCompanyContactName(request.getCompanyContactName());
+        user.setCompanyContactPhone(request.getCompanyContactPhone());
+        
+        userRepository.save(user);
+        
+        // Generate JWT token
+        String jwt = jwtUtil.generateJwtToken(user.getUsername());
+        
+        return new JwtResponse(
+            jwt,
+            user.getId(),
+            user.getUsername(),
+            user.getEmail(),
+            user.getRole().name(),
+            user.getCompanyName(),
+            user.getCompanyWebsite(),
+            user.getCompanyContactName(),
+            user.getCompanyContactPhone()
+        );
+    }
+
     // Student/company-specific registration removed. Use registerUser(RegisterRequest) instead.
     
     public JwtResponse authenticateUser(LoginRequest loginRequest) {
@@ -102,12 +145,26 @@ public class AuthService {
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         String jwt = jwtUtil.generateJwtToken(userDetails.getUsername());
         
-        return new JwtResponse(
-            jwt,
-            user.getId(),
-            user.getUsername(),
-            user.getEmail(),
-            user.getRole().name()
-        );
+        if (user.getRole() == Role.COMPANY) {
+            return new JwtResponse(
+                jwt,
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name(),
+                user.getCompanyName(),
+                user.getCompanyWebsite(),
+                user.getCompanyContactName(),
+                user.getCompanyContactPhone()
+            );
+        } else {
+            return new JwtResponse(
+                jwt,
+                user.getId(),
+                user.getUsername(),
+                user.getEmail(),
+                user.getRole().name()
+            );
+        }
     }
 }

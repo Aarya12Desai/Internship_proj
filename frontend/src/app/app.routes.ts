@@ -5,15 +5,28 @@ import { Landing } from './landing/landing';
 import { Home } from './home/home';
 import { NotificationsComponent } from './notifications/notifications';
 import { Messages } from './messages/messages';
+import { ProjectsComponent } from './projects/projects';
 import { authGuard } from './guards/auth.guard';
 import { GuestGuard } from './guards/guest.guard';
+import { CompanySignupComponent } from './company-signup/company-signup';
+import { CompanyLoginComponent } from './company-login/company-login';
+import { CompanyHomeComponent } from './company-home/company-home';
+import { CompanyJobsComponent } from './company-jobs/company-jobs';
 
 export const routes: Routes = [
   { path: '', component: Landing },
   { path: 'login', component: LoginComponent, canActivate: [GuestGuard] },
+  { path: 'company-login', component: CompanyLoginComponent, canActivate: [GuestGuard] },
   { path: 'signup', component: Signup, canActivate: [GuestGuard] },
+  { path: 'signupCompany', component: CompanySignupComponent, canActivate: [GuestGuard] },
   { path: 'home', component: Home, canActivate: [authGuard] },
+  { path: 'projects', component: ProjectsComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'messages', component: Messages, canActivate: [authGuard] },
+  
+  // Company routes
+  { path: 'company/home', component: CompanyHomeComponent, canActivate: [authGuard] },
+  { path: 'company/jobs', component: CompanyJobsComponent, canActivate: [authGuard] },
+  
   { path: '**', redirectTo: '' } // Wildcard route for handling invalid URLs
 ];
