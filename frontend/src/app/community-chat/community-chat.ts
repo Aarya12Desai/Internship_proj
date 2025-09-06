@@ -77,7 +77,7 @@ interface ChatMessage {
             name="message"
             placeholder="Type your message here..."
             class="message-textarea"
-            (keydown.enter)="onEnterPress($event)"
+            (keydown)="onEnterPress($event)"
             rows="3">
           </textarea>
           <button type="submit" [disabled]="!newMessage.trim() || loading()" class="send-btn">
