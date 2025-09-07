@@ -28,23 +28,25 @@
   <div *ngIf="!loading() && !error() && projects().length > 0" class="projects-grid">
     <div *ngFor="let project of projects()" class="project-card">
       <div class="project-header">
-        <h3 class="project-title">{{ project.title }}</h3>
-        <span class="project-status" [class]="getStatusClass(project.status)">
-          {{ project.status }}
+        <h3 class="project-title">{{ project.name }}</h3>
+        <span class="project-creator" *ngIf="project.creatorUsername">
+          by {{ project.creatorUsername }}
         </span>
       </div>
       
       <p class="project-description">{{ project.description }}</p>
       
-      <div class="project-technologies">
-        <span *ngFor="let tech of project.technologies" class="tech-tag">
-          {{ tech }}
+      <div class="project-details" *ngIf="project.country || project.language">
+        <span *ngIf="project.country" class="project-detail">
+          📍 {{ project.country }}
+        </span>
+        <span *ngIf="project.language" class="project-detail">
+          💬 {{ project.language }}
         </span>
       </div>
       
       <div class="project-meta">
         <span class="project-date">Created: {{ formatDate(project.createdAt) }}</span>
-        <span class="project-date">Updated: {{ formatDate(project.updatedAt) }}</span>
       </div>
       
       <div class="project-actions">

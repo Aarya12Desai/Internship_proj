@@ -22,37 +22,34 @@ public class CompanyProject {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    
+
     @Column(nullable = false)
-    private String title;
-    
-    @Column(columnDefinition = "TEXT")
-    private String description;
-    
-    @Column(name = "required_skills")
-    private String requiredSkills;
-    
+    private String title; // Project Title/Name
+
     @Column(name = "project_type")
-    private String projectType; // Web Development, Mobile App, Data Science, etc.
-    
-    @Column(name = "budget_range")
-    private String budgetRange;
-    
-    @Column(name = "duration_months")
-    private Integer durationMonths;
-    
-    @Column(name = "location")
-    private String location;
-    
-    @Column(name = "remote_allowed")
-    private boolean remoteAllowed = false;
-    
-    @Column(name = "application_deadline")
-    private LocalDateTime applicationDeadline;
-    
-    @Column(name = "max_team_size")
-    private Integer maxTeamSize;
-    
+    private String projectType; // Category / Type
+
+    @Column(name = "short_description", columnDefinition = "TEXT")
+    private String shortDescription; // Short Description
+
+    @Column(name = "detailed_description", columnDefinition = "TEXT")
+    private String detailedDescription; // Detailed Description
+
+    @Column(name = "technologies_used")
+    private String technologiesUsed;
+
+    @Column(name = "industry_domain")
+    private String industryDomain;
+
+    @Column(name = "objective", columnDefinition = "TEXT")
+    private String objective;
+
+    @Column(name = "media_links", columnDefinition = "TEXT")
+    private String mediaLinks; // Screenshots / Demo Video / Presentation
+
+    @Column(name = "demo_link")
+    private String demoLink; // Working Demo Link / GitHub Repository
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "company_id", nullable = false)
     private User company;
@@ -83,36 +80,33 @@ public class CompanyProject {
     // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    
+
     public String getTitle() { return title; }
     public void setTitle(String title) { this.title = title; }
-    
-    public String getDescription() { return description; }
-    public void setDescription(String description) { this.description = description; }
-    
-    public String getRequiredSkills() { return requiredSkills; }
-    public void setRequiredSkills(String requiredSkills) { this.requiredSkills = requiredSkills; }
-    
+
     public String getProjectType() { return projectType; }
     public void setProjectType(String projectType) { this.projectType = projectType; }
-    
-    public String getBudgetRange() { return budgetRange; }
-    public void setBudgetRange(String budgetRange) { this.budgetRange = budgetRange; }
-    
-    public Integer getDurationMonths() { return durationMonths; }
-    public void setDurationMonths(Integer durationMonths) { this.durationMonths = durationMonths; }
-    
-    public String getLocation() { return location; }
-    public void setLocation(String location) { this.location = location; }
-    
-    public boolean isRemoteAllowed() { return remoteAllowed; }
-    public void setRemoteAllowed(boolean remoteAllowed) { this.remoteAllowed = remoteAllowed; }
-    
-    public LocalDateTime getApplicationDeadline() { return applicationDeadline; }
-    public void setApplicationDeadline(LocalDateTime applicationDeadline) { this.applicationDeadline = applicationDeadline; }
-    
-    public Integer getMaxTeamSize() { return maxTeamSize; }
-    public void setMaxTeamSize(Integer maxTeamSize) { this.maxTeamSize = maxTeamSize; }
+
+    public String getShortDescription() { return shortDescription; }
+    public void setShortDescription(String shortDescription) { this.shortDescription = shortDescription; }
+
+    public String getDetailedDescription() { return detailedDescription; }
+    public void setDetailedDescription(String detailedDescription) { this.detailedDescription = detailedDescription; }
+
+    public String getTechnologiesUsed() { return technologiesUsed; }
+    public void setTechnologiesUsed(String technologiesUsed) { this.technologiesUsed = technologiesUsed; }
+
+    public String getIndustryDomain() { return industryDomain; }
+    public void setIndustryDomain(String industryDomain) { this.industryDomain = industryDomain; }
+
+    public String getObjective() { return objective; }
+    public void setObjective(String objective) { this.objective = objective; }
+
+    public String getMediaLinks() { return mediaLinks; }
+    public void setMediaLinks(String mediaLinks) { this.mediaLinks = mediaLinks; }
+
+    public String getDemoLink() { return demoLink; }
+    public void setDemoLink(String demoLink) { this.demoLink = demoLink; }
     
     public User getCompany() { return company; }
     public void setCompany(User company) { this.company = company; }

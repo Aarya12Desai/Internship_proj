@@ -1,6 +1,7 @@
 package com.example.auth.service;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.stereotype.Service;
 
@@ -71,5 +72,22 @@ public class ProjectService {
     
     public List<Project> getProjectsByUserId(Long userId) {
         return projectRepository.findByUserId(userId);
+    }
+    
+    public boolean deleteProject(Long projectId, String username) {
+        Optional<Project> projectOpt = projectRepository.findById(projectId);
+        if (projectOpt.isEmpty()) {
+            return false;
+        }
+        
+        Project project = projectOpt.get();
+        
+        // Check if the user is authorized to delete this project
+        if (!username.equals(project.getCreatorUsername())) {
+            return false;
+        }
+        
+        projectRepository.delete(project);
+        return true;
     }
 }

@@ -42,22 +42,36 @@ public class CommunityChatController {
     public ResponseEntity<?> getAllMessages(Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            System.out.println("Community Chat - Getting messages for user: " + username);
+            
+            // Try to find user by username first, then by email
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+                userOpt = userRepository.findByEmail(username);
+            }
+            
+            if (userOpt.isEmpty()) {
+                System.out.println("Community Chat - User not found: " + username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
             }
             
             User user = userOpt.get();
+            System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
+            
             if (user.getRole() != Role.COMPANY) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only companies can access community chat");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only companies can access community chat"));
             }
             
             List<CommunityChat> messages = communityChatRepository.findTop50ByOrderByCreatedAtDesc();
+            System.out.println("Community Chat - Retrieved " + messages.size() + " messages");
+            
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching messages");
+            System.err.println("Community Chat - Error fetching messages: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error fetching messages"));
         }
     }
     
@@ -65,21 +79,31 @@ public class CommunityChatController {
     public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> request, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            System.out.println("Community Chat - Sending message for user: " + username);
+            
+            // Try to find user by username first, then by email
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+                userOpt = userRepository.findByEmail(username);
+            }
+            
+            if (userOpt.isEmpty()) {
+                System.out.println("Community Chat - User not found: " + username);
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
             }
             
             User user = userOpt.get();
+            System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
+            
             if (user.getRole() != Role.COMPANY) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only companies can send messages to community chat");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only companies can send messages to community chat"));
             }
             
             String messageText = request.get("message");
             if (messageText == null || messageText.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Message cannot be empty");
+                return ResponseEntity.badRequest().body(Map.of("error", "Message cannot be empty"));
             }
             
             CommunityChat chatMessage = new CommunityChat();
@@ -90,9 +114,13 @@ public class CommunityChatController {
             chatMessage.setCreatedAt(LocalDateTime.now());
             
             CommunityChat savedMessage = communityChatRepository.save(chatMessage);
+            System.out.println("Community Chat - Message saved with ID: " + savedMessage.getId());
+            
             return ResponseEntity.ok(savedMessage);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error sending message");
+            System.err.println("Community Chat - Error sending message: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error sending message"));
         }
     }
     
@@ -100,27 +128,32 @@ public class CommunityChatController {
     public ResponseEntity<?> editMessage(@PathVariable Long id, @RequestBody Map<String, String> request, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            // Try to find user by username first, then by email
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+                userOpt = userRepository.findByEmail(username);
+            }
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
             }
             
             User user = userOpt.get();
             Optional<CommunityChat> messageOpt = communityChatRepository.findById(id);
             if (messageOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Message not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Message not found"));
             }
             
             CommunityChat message = messageOpt.get();
             if (!message.getSenderId().equals(user.getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only edit your own messages");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You can only edit your own messages"));
             }
             
             String newMessageText = request.get("message");
             if (newMessageText == null || newMessageText.trim().isEmpty()) {
-                return ResponseEntity.badRequest().body("Message cannot be empty");
+                return ResponseEntity.badRequest().body(Map.of("error", "Message cannot be empty"));
             }
             
             message.setMessage(newMessageText.trim());
@@ -130,7 +163,7 @@ public class CommunityChatController {
             CommunityChat savedMessage = communityChatRepository.save(message);
             return ResponseEntity.ok(savedMessage);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error editing message");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error editing message"));
         }
     }
     
@@ -138,28 +171,33 @@ public class CommunityChatController {
     public ResponseEntity<?> deleteMessage(@PathVariable Long id, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            // Try to find user by username first, then by email
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+                userOpt = userRepository.findByEmail(username);
+            }
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
             }
             
             User user = userOpt.get();
             Optional<CommunityChat> messageOpt = communityChatRepository.findById(id);
             if (messageOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Message not found");
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Message not found"));
             }
             
             CommunityChat message = messageOpt.get();
             if (!message.getSenderId().equals(user.getId())) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("You can only delete your own messages");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "You can only delete your own messages"));
             }
             
             communityChatRepository.delete(message);
-            return ResponseEntity.ok("Message deleted successfully");
+            return ResponseEntity.ok(Map.of("message", "Message deleted successfully"));
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error deleting message");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error deleting message"));
         }
     }
     
@@ -167,16 +205,21 @@ public class CommunityChatController {
     public ResponseEntity<?> getChatStats(Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            // Try to find user by username first, then by email
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
+                userOpt = userRepository.findByEmail(username);
+            }
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
             }
             
             User user = userOpt.get();
             if (user.getRole() != Role.COMPANY) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Only companies can access community chat");
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only companies can access community chat"));
             }
             
             Map<String, Object> stats = new HashMap<>();
@@ -185,7 +228,47 @@ public class CommunityChatController {
             
             return ResponseEntity.ok(stats);
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Error fetching chat stats");
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error fetching chat stats"));
+        }
+    }
+    
+    @PostMapping("/test-message")
+    public ResponseEntity<?> createTestMessage(Authentication authentication) {
+        try {
+            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+            String username = userDetails.getUsername();
+            
+            // Try to find user by username first, then by email
+            Optional<User> userOpt = userRepository.findByUsername(username);
+            if (userOpt.isEmpty()) {
+                userOpt = userRepository.findByEmail(username);
+            }
+            
+            if (userOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(Map.of("error", "User not found"));
+            }
+            
+            User user = userOpt.get();
+            if (user.getRole() != Role.COMPANY) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only companies can create test messages"));
+            }
+            
+            // Create a test message
+            CommunityChat testMessage = new CommunityChat();
+            testMessage.setMessage("Welcome to the community chat! This is a test message from " + user.getCompanyName());
+            testMessage.setSender(user);
+            testMessage.setSenderId(user.getId());
+            testMessage.setSenderCompanyName(user.getCompanyName());
+            testMessage.setCreatedAt(LocalDateTime.now());
+            
+            CommunityChat savedMessage = communityChatRepository.save(testMessage);
+            System.out.println("Community Chat - Test message created with ID: " + savedMessage.getId());
+            
+            return ResponseEntity.ok(Map.of("message", "Test message created successfully", "messageId", savedMessage.getId()));
+        } catch (Exception e) {
+            System.err.println("Community Chat - Error creating test message: " + e.getMessage());
+            e.printStackTrace();
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("error", "Error creating test message"));
         }
     }
 }

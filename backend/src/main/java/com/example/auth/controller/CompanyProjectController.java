@@ -42,9 +42,10 @@ public class CompanyProjectController {
     public ResponseEntity<?> getMyProjects(Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            // For company users, username is the company name, so find by username
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
             }
@@ -63,20 +64,28 @@ public class CompanyProjectController {
     public ResponseEntity<?> createProject(@RequestBody CompanyProject project, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
-            
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            String username = userDetails.getUsername();
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
             }
-            
             User user = userOpt.get();
-            project.setCompany(user);
-            project.setCompanyId(user.getId());
-            project.setCreatedAt(LocalDateTime.now());
-            project.setStatus(ProjectStatus.OPEN);
-            
-            CompanyProject savedProject = companyProjectRepository.save(project);
+            // Only save the allowed fields
+            CompanyProject newProject = new CompanyProject();
+            newProject.setTitle(project.getTitle());
+            newProject.setProjectType(project.getProjectType());
+            newProject.setShortDescription(project.getShortDescription());
+            newProject.setDetailedDescription(project.getDetailedDescription());
+            newProject.setTechnologiesUsed(project.getTechnologiesUsed());
+            newProject.setIndustryDomain(project.getIndustryDomain());
+            newProject.setObjective(project.getObjective());
+            newProject.setMediaLinks(project.getMediaLinks());
+            newProject.setDemoLink(project.getDemoLink());
+            newProject.setCompany(user);
+            newProject.setCompanyId(user.getId());
+            newProject.setCreatedAt(LocalDateTime.now());
+            newProject.setStatus(ProjectStatus.OPEN);
+            CompanyProject savedProject = companyProjectRepository.save(newProject);
             return ResponseEntity.ok(savedProject);
         } catch (Exception e) {
             e.printStackTrace();
@@ -88,9 +97,9 @@ public class CompanyProjectController {
     public ResponseEntity<?> updateProject(@PathVariable Long id, @RequestBody CompanyProject projectUpdate, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
             }
@@ -106,18 +115,16 @@ public class CompanyProjectController {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN).body("Not authorized to update this project");
             }
             
-            // Update fields
+            // Update only allowed fields
             project.setTitle(projectUpdate.getTitle());
-            project.setDescription(projectUpdate.getDescription());
-            project.setRequiredSkills(projectUpdate.getRequiredSkills());
             project.setProjectType(projectUpdate.getProjectType());
-            project.setBudgetRange(projectUpdate.getBudgetRange());
-            project.setDurationMonths(projectUpdate.getDurationMonths());
-            project.setLocation(projectUpdate.getLocation());
-            project.setRemoteAllowed(projectUpdate.isRemoteAllowed());
-            project.setApplicationDeadline(projectUpdate.getApplicationDeadline());
-            project.setMaxTeamSize(projectUpdate.getMaxTeamSize());
-            project.setStatus(projectUpdate.getStatus());
+            project.setShortDescription(projectUpdate.getShortDescription());
+            project.setDetailedDescription(projectUpdate.getDetailedDescription());
+            project.setTechnologiesUsed(projectUpdate.getTechnologiesUsed());
+            project.setIndustryDomain(projectUpdate.getIndustryDomain());
+            project.setObjective(projectUpdate.getObjective());
+            project.setMediaLinks(projectUpdate.getMediaLinks());
+            project.setDemoLink(projectUpdate.getDemoLink());
             project.setUpdatedAt(LocalDateTime.now());
             
             CompanyProject savedProject = companyProjectRepository.save(project);
@@ -132,9 +139,9 @@ public class CompanyProjectController {
     public ResponseEntity<?> deleteProject(@PathVariable Long id, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
             }
@@ -162,9 +169,9 @@ public class CompanyProjectController {
     public ResponseEntity<?> getDashboardStats(Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String email = userDetails.getUsername();
+            String username = userDetails.getUsername();
             
-            Optional<User> userOpt = userRepository.findByEmail(email);
+            Optional<User> userOpt = userRepository.findByUsername(username);
             if (userOpt.isEmpty()) {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("User not found");
             }

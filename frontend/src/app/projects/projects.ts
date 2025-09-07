@@ -6,12 +6,12 @@ import { Auth } from '../services/auth';
 
 interface Project {
   id: number;
-  title: string;
+  name: string;
   description: string;
-  technologies: string[];
-  status: string;
+  country?: string;
+  language?: string;
   createdAt: string;
-  updatedAt: string;
+  creatorUsername?: string;
 }
 
 @Component({
@@ -36,8 +36,12 @@ export class ProjectsComponent implements OnInit {
   }
 
   loadProjects() {
+    console.log('Loading projects...');
     const token = this.auth.token;
+    console.log('Token available:', !!token);
+    
     if (!token) {
+      console.log('No token found, user needs to log in');
       this.error.set('Please log in to view your projects');
       return;
     }
@@ -49,26 +53,24 @@ export class ProjectsComponent implements OnInit {
       'Authorization': `Bearer ${token}`
     });
 
+    console.log('Making request to:', 'http://localhost:8081/api/projects/my-projects');
+    console.log('Headers:', headers.keys());
+
     this.http.get<Project[]>('http://localhost:8081/api/projects/my-projects', { headers })
       .subscribe({
         next: (projects) => {
+          console.log('Projects received:', projects);
           this.projects.set(projects);
           this.loading.set(false);
         },
         error: (err) => {
+          console.error('Error loading projects:', err);
+          console.error('Error status:', err.status);
+          console.error('Error message:', err.error);
           this.error.set(err.error?.message || 'Failed to load projects');
           this.loading.set(false);
         }
       });
-  }
-
-  getStatusClass(status: string): string {
-    switch (status.toLowerCase()) {
-      case 'active': return 'status-active';
-      case 'completed': return 'status-completed';
-      case 'paused': return 'status-paused';
-      default: return 'status-draft';
-    }
   }
 
   formatDate(dateString: string): string {

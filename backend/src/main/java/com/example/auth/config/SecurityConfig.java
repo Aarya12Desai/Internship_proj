@@ -63,6 +63,8 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/api/auth/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/projects/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/notifications/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/upload/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/uploads/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/test/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/error")).permitAll() // For error pages
                 .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll() // For actuator endpoints

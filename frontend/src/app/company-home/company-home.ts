@@ -156,10 +156,7 @@ export class CompanyHomeComponent implements OnInit {
   }
 
   loadDashboardStats() {
-    const token = this.authService.token;
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
-    this.http.get<any>('http://localhost:8081/api/company-projects/dashboard-stats', { headers })
+    this.http.get<any>('/api/company-projects/dashboard-stats')
       .subscribe({
         next: (response) => {
           this.stats = response;
@@ -171,10 +168,7 @@ export class CompanyHomeComponent implements OnInit {
   }
 
   loadRecentProjects() {
-    const token = this.authService.token;
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
-    this.http.get<any[]>('http://localhost:8081/api/company-projects/my-projects', { headers })
+    this.http.get<any[]>('/api/company-projects/my-projects')
       .subscribe({
         next: (projects) => {
           this.recentProjects = projects.slice(0, 3); // Show only first 3 recent projects

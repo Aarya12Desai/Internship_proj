@@ -13,158 +13,185 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
     <div class="create-project-container">
       <div class="form-header">
         <h1>{{isEditMode ? 'Edit Project' : 'Post a New Project'}}</h1>
-        <p>{{isEditMode ? 'Update your project details' : 'Attract skilled collaborators to your company project'}}</p>
+        <p>{{isEditMode ? 'Update your project details' : 'Showcase your company project to attract collaborators'}}</p>
       </div>
 
       <form [formGroup]="projectForm" (ngSubmit)="onSubmit()" class="project-form">
-        <div class="form-row">
-          <div class="form-group">
-            <label for="title">Project Title *</label>
-            <input 
-              type="text" 
-              id="title" 
-              formControlName="title"
-              placeholder="Enter project title"
-              [class.error]="projectForm.get('title')?.invalid && projectForm.get('title')?.touched"
-            >
-            <div *ngIf="projectForm.get('title')?.invalid && projectForm.get('title')?.touched" class="error-message">
-              Project title is required
+        <div class="form-group">
+          <label for="title">Project Title/Name *</label>
+          <input 
+            type="text" 
+            id="title" 
+            formControlName="title"
+            placeholder="Enter your project title"
+            [class.error]="projectForm.get('title')?.invalid && projectForm.get('title')?.touched"
+          >
+          <div *ngIf="projectForm.get('title')?.invalid && projectForm.get('title')?.touched" class="error-message">
+            Project title is required (minimum 3 characters)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="projectType">Category / Type *</label>
+          <select 
+            id="projectType" 
+            formControlName="projectType"
+            [class.error]="projectForm.get('projectType')?.invalid && projectForm.get('projectType')?.touched"
+          >
+            <option value="">Select project category</option>
+            <option value="Web App">Web App</option>
+            <option value="Mobile App">Mobile App</option>
+            <option value="Research Project">Research Project</option>
+            <option value="AI Model">AI Model</option>
+            <option value="Hardware Prototype">Hardware Prototype</option>
+            <option value="Software Tool">Software Tool</option>
+            <option value="Game Development">Game Development</option>
+            <option value="Data Analytics">Data Analytics</option>
+            <option value="IoT Solution">IoT Solution</option>
+            <option value="Other">Other</option>
+          </select>
+          <div *ngIf="projectForm.get('projectType')?.invalid && projectForm.get('projectType')?.touched" class="error-message">
+            Project category is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="shortDescription">Short Description *</label>
+          <textarea 
+            id="shortDescription" 
+            formControlName="shortDescription"
+            rows="3"
+            placeholder="Brief overview of your project (elevator pitch)"
+            [class.error]="projectForm.get('shortDescription')?.invalid && projectForm.get('shortDescription')?.touched"
+          ></textarea>
+          <div *ngIf="projectForm.get('shortDescription')?.invalid && projectForm.get('shortDescription')?.touched" class="error-message">
+            Short description is required (minimum 10 characters)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="detailedDescription">Detailed Description *</label>
+          <textarea 
+            id="detailedDescription" 
+            formControlName="detailedDescription"
+            rows="6"
+            placeholder="Detailed explanation: problem solved, features, workflow, what makes it unique..."
+            [class.error]="projectForm.get('detailedDescription')?.invalid && projectForm.get('detailedDescription')?.touched"
+          ></textarea>
+          <div *ngIf="projectForm.get('detailedDescription')?.invalid && projectForm.get('detailedDescription')?.touched" class="error-message">
+            Detailed description is required (minimum 20 characters)
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="technologiesUsed">Technologies Used *</label>
+          <input 
+            type="text" 
+            id="technologiesUsed" 
+            formControlName="technologiesUsed"
+            placeholder="e.g., React, Node.js, Python, AWS, MongoDB, TensorFlow..."
+            [class.error]="projectForm.get('technologiesUsed')?.invalid && projectForm.get('technologiesUsed')?.touched"
+          >
+          <div *ngIf="projectForm.get('technologiesUsed')?.invalid && projectForm.get('technologiesUsed')?.touched" class="error-message">
+            Technologies used are required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="industryDomain">Industry / Domain *</label>
+          <select 
+            id="industryDomain" 
+            formControlName="industryDomain"
+            [class.error]="projectForm.get('industryDomain')?.invalid && projectForm.get('industryDomain')?.touched"
+          >
+            <option value="">Select industry domain</option>
+            <option value="Education">Education</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="FinTech">FinTech</option>
+            <option value="Automotive">Automotive</option>
+            <option value="E-commerce">E-commerce</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Social Media">Social Media</option>
+            <option value="Travel & Tourism">Travel & Tourism</option>
+            <option value="Food & Beverage">Food & Beverage</option>
+            <option value="Real Estate">Real Estate</option>
+            <option value="Manufacturing">Manufacturing</option>
+            <option value="Agriculture">Agriculture</option>
+            <option value="Energy">Energy</option>
+            <option value="Government">Government</option>
+            <option value="Non-Profit">Non-Profit</option>
+            <option value="Other">Other</option>
+          </select>
+          <div *ngIf="projectForm.get('industryDomain')?.invalid && projectForm.get('industryDomain')?.touched" class="error-message">
+            Industry domain is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="objective">Objective / Purpose *</label>
+          <textarea 
+            id="objective" 
+            formControlName="objective"
+            rows="4"
+            placeholder="Why was this project made? What problem does it solve? What value does it provide?"
+            [class.error]="projectForm.get('objective')?.invalid && projectForm.get('objective')?.touched"
+          ></textarea>
+          <div *ngIf="projectForm.get('objective')?.invalid && projectForm.get('objective')?.touched" class="error-message">
+            Project objective is required
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="mediaFiles">Upload Screenshots / Demo Videos</label>
+          <input 
+            type="file" 
+            id="mediaFiles" 
+            (change)="onMediaFilesSelected($event)"
+            multiple
+            accept="image/*,video/*"
+            class="file-input"
+          >
+          <div class="file-upload-area" (click)="triggerFileInput()">
+            <i class="fas fa-cloud-upload-alt"></i>
+            <p>Click to upload or drag and drop</p>
+            <small>Images and videos only (max 10MB each)</small>
+          </div>
+          
+          <!-- Show existing uploaded files (when editing) -->
+          <div *ngIf="uploadedMediaUrls.length > 0" class="existing-files">
+            <h4>Current Media Files:</h4>
+            <div *ngFor="let url of uploadedMediaUrls; let i = index" class="existing-file-item">
+              <a [href]="url" target="_blank" class="file-link">
+                <i class="fas fa-external-link-alt"></i> View File {{i + 1}}
+              </a>
+              <button type="button" class="remove-file-btn" (click)="removeExistingFile(i)">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
           </div>
-
-          <div class="form-group">
-            <label for="projectType">Project Type *</label>
-            <select 
-              id="projectType" 
-              formControlName="projectType"
-              [class.error]="projectForm.get('projectType')?.invalid && projectForm.get('projectType')?.touched"
-            >
-              <option value="">Select project type</option>
-              <option value="Web Development">Web Development</option>
-              <option value="Mobile App">Mobile App Development</option>
-              <option value="Data Science">Data Science</option>
-              <option value="AI/ML">AI/Machine Learning</option>
-              <option value="Backend Development">Backend Development</option>
-              <option value="Frontend Development">Frontend Development</option>
-              <option value="Full Stack">Full Stack Development</option>
-              <option value="DevOps">DevOps</option>
-              <option value="UI/UX Design">UI/UX Design</option>
-              <option value="Research">Research</option>
-              <option value="Consulting">Consulting</option>
-              <option value="Other">Other</option>
-            </select>
-            <div *ngIf="projectForm.get('projectType')?.invalid && projectForm.get('projectType')?.touched" class="error-message">
-              Project type is required
+          
+          <!-- Show newly selected files -->
+          <div *ngIf="selectedMediaFiles.length > 0" class="uploaded-files">
+            <h4>New Files to Upload:</h4>
+            <div *ngFor="let file of selectedMediaFiles; let i = index" class="file-item">
+              <span class="file-name">{{file.name}}</span>
+              <span class="file-size">({{formatFileSize(file.size)}})</span>
+              <button type="button" class="remove-file-btn" (click)="removeMediaFile(i)">
+                <i class="fas fa-times"></i>
+              </button>
             </div>
           </div>
         </div>
 
         <div class="form-group">
-          <label for="description">Project Description *</label>
-          <textarea 
-            id="description" 
-            formControlName="description"
-            rows="5"
-            placeholder="Describe your project, its goals, and what you're looking for in collaborators..."
-            [class.error]="projectForm.get('description')?.invalid && projectForm.get('description')?.touched"
-          ></textarea>
-          <div *ngIf="projectForm.get('description')?.invalid && projectForm.get('description')?.touched" class="error-message">
-            Project description is required
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="requiredSkills">Required Skills *</label>
-            <input 
-              type="text" 
-              id="requiredSkills" 
-              formControlName="requiredSkills"
-              placeholder="e.g., React, Node.js, Python, UI/UX"
-              [class.error]="projectForm.get('requiredSkills')?.invalid && projectForm.get('requiredSkills')?.touched"
-            >
-            <div *ngIf="projectForm.get('requiredSkills')?.invalid && projectForm.get('requiredSkills')?.touched" class="error-message">
-              Required skills are necessary
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="budgetRange">Budget Range</label>
-            <select id="budgetRange" formControlName="budgetRange">
-              <option value="">Select budget range</option>
-              <option value="Under $1,000">Under $1,000</option>
-              <option value="$1,000 - $5,000">$1,000 - $5,000</option>
-              <option value="$5,000 - $10,000">$5,000 - $10,000</option>
-              <option value="$10,000 - $25,000">$10,000 - $25,000</option>
-              <option value="$25,000 - $50,000">$25,000 - $50,000</option>
-              <option value="$50,000+">$50,000+</option>
-              <option value="Equity/Revenue Share">Equity/Revenue Share</option>
-              <option value="Unpaid/Volunteer">Unpaid/Volunteer</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="location">Location *</label>
-            <input 
-              type="text" 
-              id="location" 
-              formControlName="location"
-              placeholder="e.g., New York, NY or Remote"
-              [class.error]="projectForm.get('location')?.invalid && projectForm.get('location')?.touched"
-            >
-            <div *ngIf="projectForm.get('location')?.invalid && projectForm.get('location')?.touched" class="error-message">
-              Location is required
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label for="durationMonths">Duration (Months)</label>
-            <input 
-              type="number" 
-              id="durationMonths" 
-              formControlName="durationMonths"
-              placeholder="e.g., 6"
-              min="1"
-              max="60"
-            >
-          </div>
-        </div>
-
-        <div class="form-row">
-          <div class="form-group">
-            <label for="maxTeamSize">Maximum Team Size</label>
-            <input 
-              type="number" 
-              id="maxTeamSize" 
-              formControlName="maxTeamSize"
-              placeholder="e.g., 5"
-              min="1"
-              max="50"
-            >
-          </div>
-
-          <div class="form-group">
-            <label for="applicationDeadline">Application Deadline</label>
-            <input 
-              type="date" 
-              id="applicationDeadline" 
-              formControlName="applicationDeadline"
-              [min]="tomorrow"
-            >
-          </div>
-        </div>
-
-        <div class="form-group checkbox-group">
-          <label class="checkbox-label">
-            <input 
-              type="checkbox" 
-              formControlName="remoteAllowed"
-            >
-            <span class="checkmark"></span>
-            Remote work allowed
-          </label>
+          <label for="demoLink">Working Demo Link / GitHub Repository</label>
+          <input 
+            type="url" 
+            id="demoLink" 
+            formControlName="demoLink"
+            placeholder="https://github.com/yourproject or https://demo.yourproject.com"
+          >
+          <small class="form-hint">Optional: Link to live demo or source code repository</small>
         </div>
 
         <div class="form-actions">
@@ -178,11 +205,11 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
           >
             <span *ngIf="isSubmitting">
               <i class="fas fa-spinner fa-spin"></i>
-              {{isEditMode ? 'Updating...' : 'Posting...'}}
+              {{isEditMode ? 'Updating...' : 'Publishing...'}}
             </span>
             <span *ngIf="!isSubmitting">
               <i class="fas fa-rocket"></i>
-              {{isEditMode ? 'Update Project' : 'Post Project'}}
+              {{isEditMode ? 'Update Project' : 'Publish Project'}}
             </span>
           </button>
         </div>
@@ -201,19 +228,19 @@ export class CompanyCreateProjectComponent implements OnInit {
   isSubmitting = false;
   isEditMode = false;
   projectId: number | null = null;
+  selectedMediaFiles: File[] = [];
+  uploadedMediaUrls: string[] = [];
   tomorrow = new Date(Date.now() + 86400000).toISOString().split('T')[0];
 
   projectForm: FormGroup = this.fb.group({
     title: ['', [Validators.required, Validators.minLength(3)]],
-    description: ['', [Validators.required, Validators.minLength(10)]],
     projectType: ['', Validators.required],
-    requiredSkills: ['', Validators.required],
-    budgetRange: [''],
-    location: ['', Validators.required],
-    remoteAllowed: [false],
-    durationMonths: [''],
-    maxTeamSize: [''],
-    applicationDeadline: ['']
+    shortDescription: ['', [Validators.required, Validators.minLength(10)]],
+    detailedDescription: ['', [Validators.required, Validators.minLength(20)]],
+    technologiesUsed: ['', Validators.required],
+    industryDomain: ['', Validators.required],
+    objective: ['', Validators.required],
+    demoLink: ['']
   });
 
   ngOnInit() {
@@ -229,31 +256,24 @@ export class CompanyCreateProjectComponent implements OnInit {
   loadProject() {
     if (!this.projectId) return;
 
-    const token = this.authService.token;
-    const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
-    this.http.get(`http://localhost:8081/api/company-projects/${this.projectId}`, { headers })
+    this.http.get(`http://localhost:8081/api/company-projects/${this.projectId}`)
       .subscribe({
         next: (project: any) => {
-          // Format the date for the input field
-          let formattedDate = '';
-          if (project.applicationDeadline) {
-            const date = new Date(project.applicationDeadline);
-            formattedDate = date.toISOString().split('T')[0];
-          }
-
           this.projectForm.patchValue({
             title: project.title,
-            description: project.description,
             projectType: project.projectType,
-            requiredSkills: project.requiredSkills,
-            budgetRange: project.budgetRange,
-            location: project.location,
-            remoteAllowed: project.remoteAllowed,
-            durationMonths: project.durationMonths,
-            maxTeamSize: project.maxTeamSize,
-            applicationDeadline: formattedDate
+            shortDescription: project.shortDescription,
+            detailedDescription: project.detailedDescription,
+            technologiesUsed: project.technologiesUsed,
+            industryDomain: project.industryDomain,
+            objective: project.objective,
+            demoLink: project.demoLink
           });
+          
+          // Handle existing media links
+          if (project.mediaLinks) {
+            this.uploadedMediaUrls = project.mediaLinks.split('\n').filter((url: string) => url.trim());
+          }
         },
         error: (error) => {
           console.error('Error loading project:', error);
@@ -267,47 +287,50 @@ export class CompanyCreateProjectComponent implements OnInit {
     if (this.projectForm.valid) {
       this.isSubmitting = true;
       
-      const projectData = {
-        ...this.projectForm.value,
-        durationMonths: this.projectForm.value.durationMonths || null,
-        maxTeamSize: this.projectForm.value.maxTeamSize || null,
-        applicationDeadline: this.projectForm.value.applicationDeadline || null
-      };
-
-      const token = this.authService.token;
-      const headers = new HttpHeaders().set('Authorization', `Bearer ${token}`);
-
-      if (this.isEditMode && this.projectId) {
-        // Update existing project
-        this.http.put(`http://localhost:8081/api/company-projects/${this.projectId}`, projectData, { headers })
-          .subscribe({
-            next: (response) => {
-              console.log('Project updated successfully:', response);
-              this.router.navigate(['/company/projects']);
-            },
-            error: (error) => {
-              console.error('Error updating project:', error);
-              alert('Failed to update project. Please try again.');
-              this.isSubmitting = false;
-            }
-          });
-      } else {
-        // Create new project
-        this.http.post('http://localhost:8081/api/company-projects', projectData, { headers })
-          .subscribe({
-            next: (response) => {
-              console.log('Project created successfully:', response);
-              this.router.navigate(['/company/projects']);
-            },
-            error: (error) => {
-              console.error('Error creating project:', error);
-              alert('Failed to create project. Please try again.');
-              this.isSubmitting = false;
-            }
-          });
-      }
+      // First upload new media files, then create/update project
+      this.uploadMediaFiles().then(newMediaUrls => {
+        // Combine existing URLs with new uploaded URLs
+        const allMediaUrls = [...this.uploadedMediaUrls, ...newMediaUrls];
+        
+        const projectData = { 
+          ...this.projectForm.value,
+          mediaLinks: allMediaUrls.join('\n') // Store URLs as newline-separated string
+        };
+        
+        const token = this.authService.token;
+        const headers = new HttpHeaders()
+          .set('Authorization', `Bearer ${token}`)
+          .set('Content-Type', 'application/json');
+          
+        if (this.isEditMode && this.projectId) {
+          this.http.put(`http://localhost:8081/api/company-projects/${this.projectId}`, projectData, { headers })
+            .subscribe({
+              next: (response) => {
+                this.router.navigate(['/company/projects']);
+              },
+              error: (error) => {
+                alert('Failed to update project. Please try again.');
+                this.isSubmitting = false;
+              }
+            });
+        } else {
+          this.http.post('http://localhost:8081/api/company-projects', projectData, { headers })
+            .subscribe({
+              next: (response) => {
+                this.router.navigate(['/company/projects']);
+              },
+              error: (error) => {
+                alert('Failed to create project. Please try again.');
+                this.isSubmitting = false;
+              }
+            });
+        }
+      }).catch(error => {
+        console.error('Error uploading files:', error);
+        alert('Failed to upload media files. Please try again.');
+        this.isSubmitting = false;
+      });
     } else {
-      // Mark all fields as touched to show validation errors
       Object.keys(this.projectForm.controls).forEach(key => {
         this.projectForm.get(key)?.markAsTouched();
       });
@@ -316,5 +339,68 @@ export class CompanyCreateProjectComponent implements OnInit {
 
   goBack() {
     this.router.navigate(['/company/projects']);
+  }
+
+  onMediaFilesSelected(event: any) {
+    const files = Array.from(event.target.files) as File[];
+    
+    // Validate file types and sizes
+    const validFiles = files.filter(file => {
+      const isValidType = file.type.startsWith('image/') || file.type.startsWith('video/');
+      const isValidSize = file.size <= 10 * 1024 * 1024; // 10MB limit
+      
+      if (!isValidType) {
+        alert(`${file.name} is not a valid image or video file.`);
+        return false;
+      }
+      if (!isValidSize) {
+        alert(`${file.name} is too large. Maximum size is 10MB.`);
+        return false;
+      }
+      return true;
+    });
+
+    this.selectedMediaFiles = [...this.selectedMediaFiles, ...validFiles];
+  }
+
+  triggerFileInput() {
+    const fileInput = document.getElementById('mediaFiles') as HTMLInputElement;
+    fileInput?.click();
+  }
+
+  removeMediaFile(index: number) {
+    this.selectedMediaFiles.splice(index, 1);
+  }
+
+  removeExistingFile(index: number) {
+    this.uploadedMediaUrls.splice(index, 1);
+  }
+
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+  }
+
+  async uploadMediaFiles(): Promise<string[]> {
+    if (this.selectedMediaFiles.length === 0) return [];
+
+    const uploadPromises = this.selectedMediaFiles.map(async (file) => {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      try {
+        const response = await this.http.post<{url: string}>('http://localhost:8081/api/upload/media', formData).toPromise();
+        return response?.url || '';
+      } catch (error) {
+        console.error('Error uploading file:', file.name, error);
+        return '';
+      }
+    });
+
+    const urls = await Promise.all(uploadPromises);
+    return urls.filter(url => url !== '');
   }
 }
