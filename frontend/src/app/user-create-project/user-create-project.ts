@@ -306,7 +306,7 @@ export class UserCreateProjectComponent {
       domain: this.project.domain.trim()
     };
 
-    this.http.post<any>('http://localhost:8081/api/projects', payload, { headers })
+    this.http.post<any>('http://localhost:8082/api/projects', payload, { headers })
       .subscribe({
         next: (response) => {
           console.log('Project created successfully:', response);

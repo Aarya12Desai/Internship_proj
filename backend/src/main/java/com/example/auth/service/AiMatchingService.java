@@ -23,7 +23,7 @@ public class AiMatchingService {
     private ProjectRepository projectRepository;
 
     public Map<String, Object> findMatches(Map<String, Object> projectData) {
-        // Simulate AI matching logic without saving to database
+        // Use real database matching logic instead of mock data
         List<Map<String, Object>> matches = new ArrayList<>();
 
         String title = (String) projectData.get("title");
@@ -32,14 +32,32 @@ public class AiMatchingService {
         String technologiesUsed = (String) projectData.get("technologiesUsed");
         String description = (String) projectData.get("description");
 
-        // Generate mock company matches based on project data
-        matches.addAll(generateCompanyMatches(projectType, industryDomain, technologiesUsed));
+        // Get all projects from database for real matching
+        List<com.example.auth.model.Project> allProjects = projectRepository.findAll();
         
-        // Generate mock startup matches
-        matches.addAll(generateStartupMatches(projectType, industryDomain));
-        
-        // Generate mock incubator matches
-        matches.addAll(generateIncubatorMatches(industryDomain));
+        // Find matching projects based on domain and technologies
+        for (com.example.auth.model.Project project : allProjects) {
+            // Calculate match score based on similarity
+            double matchScore = calculateProjectMatchScore(
+                industryDomain, technologiesUsed, description,
+                project.getDomain(), project.getTechnologiesUsed(), project.getDescription()
+            );
+            
+            // Only include if match score is above threshold (50%)
+            if (matchScore >= 50) {
+                Map<String, Object> match = new HashMap<>();
+                match.put("id", project.getId());
+                match.put("name", project.getName());
+                match.put("type", "Project");
+                match.put("industry", project.getDomain());
+                match.put("description", project.getDescription());
+                match.put("technologies", project.getTechnologiesUsed());
+                match.put("matchScore", (int) matchScore);
+                match.put("creator", project.getCreatorUsername());
+                match.put("createdAt", project.getCreatedAt());
+                matches.add(match);
+            }
+        }
 
         // Sort by match score (descending)
         matches.sort((a, b) -> Integer.compare((Integer) b.get("matchScore"), (Integer) a.get("matchScore")));
@@ -50,6 +68,65 @@ public class AiMatchingService {
         result.put("searchQuery", projectData);
         
         return result;
+    }
+    
+    private double calculateProjectMatchScore(String inputDomain, String inputTech, String inputDesc,
+                                            String projectDomain, String projectTech, String projectDesc) {
+        double score = 0.0;
+        
+        // Domain matching (40% weight)
+        if (inputDomain != null && projectDomain != null) {
+            if (inputDomain.equalsIgnoreCase(projectDomain)) {
+                score += 40;
+            } else if (inputDomain.toLowerCase().contains(projectDomain.toLowerCase()) ||
+                      projectDomain.toLowerCase().contains(inputDomain.toLowerCase())) {
+                score += 20;
+            }
+        }
+        
+        // Technology matching (35% weight)
+        if (inputTech != null && projectTech != null) {
+            String[] inputTechArray = inputTech.toLowerCase().split("[,\\s]+");
+            String[] projectTechArray = projectTech.toLowerCase().split("[,\\s]+");
+            
+            int commonTech = 0;
+            for (String tech1 : inputTechArray) {
+                for (String tech2 : projectTechArray) {
+                    if (tech1.contains(tech2) || tech2.contains(tech1)) {
+                        commonTech++;
+                        break;
+                    }
+                }
+            }
+            
+            if (commonTech > 0) {
+                score += (35.0 * commonTech) / Math.max(inputTechArray.length, projectTechArray.length);
+            }
+        }
+        
+        // Description similarity (25% weight)
+        if (inputDesc != null && projectDesc != null) {
+            String[] inputWords = inputDesc.toLowerCase().split("\\s+");
+            String[] projectWords = projectDesc.toLowerCase().split("\\s+");
+            
+            int commonWords = 0;
+            for (String word1 : inputWords) {
+                if (word1.length() > 3) { // Only consider meaningful words
+                    for (String word2 : projectWords) {
+                        if (word1.equals(word2)) {
+                            commonWords++;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (commonWords > 0) {
+                score += (25.0 * commonWords) / Math.max(inputWords.length, projectWords.length);
+            }
+        }
+        
+        return Math.min(score, 100); // Cap at 100%
     }
 
     public Map<String, Object> findCompanyMatches(Map<String, Object> projectData) {

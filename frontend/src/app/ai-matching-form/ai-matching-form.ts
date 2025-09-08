@@ -139,7 +139,7 @@ export class AiMatchingFormComponent {
       country: this.form.country.trim(),
       description: this.form.description.trim()
     };
-    this.http.post<any[]>('http://localhost:8081/api/ai-matching', payload, { headers })
+    this.http.post<any[]>('http://localhost:8082/api/ai-matching', payload, { headers })
       .subscribe({
         next: (response) => {
           this.matches = response || [];
