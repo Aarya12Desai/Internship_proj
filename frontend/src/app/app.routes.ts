@@ -12,10 +12,11 @@ import { CompanySignupComponent } from './company-signup/company-signup';
 import { CompanyLoginComponent } from './company-login/company-login';
 import { CompanyHomeComponent } from './company-home/company-home';
 import { CompanyProjectsComponent } from './company-projects/company-projects';
-import { CompanyProjectsBrowseComponent } from './company-projects-browse/company-projects-browse';
 import { CompanyCreateProjectComponent } from './company-create-project/company-create-project';
 import { CommunityChatComponent } from './community-chat/community-chat';
 import { UserCreateProjectComponent } from './user-create-project/user-create-project';
+
+import { AiMatchingComponent } from './ai-matching/ai-matching.component';
 import { UserProjectsBrowseComponent } from './user-projects-browse/user-projects-browse';
 
 export const routes: Routes = [
@@ -28,9 +29,9 @@ export const routes: Routes = [
   { path: 'projects', component: ProjectsComponent, canActivate: [authGuard] },
   { path: 'create-project', component: UserCreateProjectComponent, canActivate: [authGuard] },
   { path: 'browse-projects', component: UserProjectsBrowseComponent, canActivate: [authGuard] },
-  { path: 'browse-company-projects', component: CompanyProjectsBrowseComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'messages', component: Messages, canActivate: [authGuard] },
+  { path: 'ai-matching', component: AiMatchingComponent, canActivate: [authGuard] },
   
   // Company routes
   { path: 'company/home', component: CompanyHomeComponent, canActivate: [authGuard] },

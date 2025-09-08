@@ -30,13 +30,14 @@ public class ProjectService {
             .orElseThrow(() -> new RuntimeException("User not found: " + username));
         
         Project p = new Project();
-        p.setName(req.name);
-        p.setCountry(req.country);
-        p.setDescription(req.description);
-        p.setLanguage(req.language);
-        p.setCreator(creator);
-        p.setCreatorUsername(username);
-        p.setUserId(creator.getId());
+    p.setName(req.name);
+    p.setDescription(req.description);
+    p.setImage(req.image);
+    p.setTechnologiesUsed(req.technologiesUsed);
+    p.setDomain(req.domain);
+    p.setCreator(creator);
+    p.setCreatorUsername(username);
+    p.setUserId(creator.getId());
         
         Project savedProject = projectRepository.save(p);
         
@@ -56,9 +57,10 @@ public class ProjectService {
     public Project createProject(ProjectRequest req) {
         Project p = new Project();
         p.setName(req.name);
-        p.setCountry(req.country);
         p.setDescription(req.description);
-        p.setLanguage(req.language);
+        p.setImage(req.image);
+        p.setTechnologiesUsed(req.technologiesUsed);
+        p.setDomain(req.domain);
         return projectRepository.save(p);
     }
     

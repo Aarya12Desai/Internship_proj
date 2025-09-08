@@ -121,14 +121,14 @@ public class ProjectMatchingService {
             project2.getName() != null ? project2.getName() : ""
         );
         
-        double countrySim = project1.getCountry() != null && project2.getCountry() != null 
-            && project1.getCountry().equalsIgnoreCase(project2.getCountry()) ? 1.0 : 0.0;
-        
-        double languageSim = project1.getLanguage() != null && project2.getLanguage() != null 
-            && project1.getLanguage().equalsIgnoreCase(project2.getLanguage()) ? 1.0 : 0.0;
-        
+        double domainSim = project1.getDomain() != null && project2.getDomain() != null 
+            && project1.getDomain().equalsIgnoreCase(project2.getDomain()) ? 1.0 : 0.0;
+
+        double techSim = project1.getTechnologiesUsed() != null && project2.getTechnologiesUsed() != null 
+            && project1.getTechnologiesUsed().equalsIgnoreCase(project2.getTechnologiesUsed()) ? 1.0 : 0.0;
+
         // Weighted combination
-        return (descriptionSim * 0.5) + (nameSim * 0.3) + (countrySim * 0.1) + (languageSim * 0.1);
+        return (descriptionSim * 0.5) + (nameSim * 0.3) + (domainSim * 0.1) + (techSim * 0.1);
     }
     
     /**

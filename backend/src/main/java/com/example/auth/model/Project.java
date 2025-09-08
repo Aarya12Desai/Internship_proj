@@ -21,12 +21,15 @@ public class Project {
     private Long id;
 
     private String name;
-    private String country;
 
     @Column(length = 2000)
     private String description;
 
-    private String language;
+    @Column(length = 10000)
+    private String image; // base64 or URL
+
+    private String technologiesUsed;
+    private String domain;
 
     @ManyToOne
     @JoinColumn(name = "creator_id")
@@ -46,12 +49,14 @@ public class Project {
     public void setId(Long id) { this.id = id; }
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
-    public String getCountry() { return country; }
-    public void setCountry(String country) { this.country = country; }
     public String getDescription() { return description; }
     public void setDescription(String description) { this.description = description; }
-    public String getLanguage() { return language; }
-    public void setLanguage(String language) { this.language = language; }
+    public String getImage() { return image; }
+    public void setImage(String image) { this.image = image; }
+    public String getTechnologiesUsed() { return technologiesUsed; }
+    public void setTechnologiesUsed(String technologiesUsed) { this.technologiesUsed = technologiesUsed; }
+    public String getDomain() { return domain; }
+    public void setDomain(String domain) { this.domain = domain; }
     public User getCreator() { return creator; }
     public void setCreator(User creator) { this.creator = creator; }
     public String getCreatorUsername() { return creatorUsername; }
