@@ -15,8 +15,13 @@ import com.example.auth.dto.LoginRequest;
 import com.example.auth.dto.RegisterRequest;
 import com.example.auth.exception.UserAlreadyExistsException;
 import com.example.auth.exception.UserNotFoundException;
+import com.example.auth.model.Community;
+import com.example.auth.model.CommunityMembership;
+import com.example.auth.model.MembershipRole;
 import com.example.auth.model.Role;
 import com.example.auth.model.User;
+import com.example.auth.repository.CommunityMembershipRepository;
+import com.example.auth.repository.CommunityRepository;
 import com.example.auth.repository.UserRepository;
 import com.example.auth.util.JwtUtil;
 
@@ -35,6 +40,12 @@ public class AuthService {
     
     @Autowired
     private JwtUtil jwtUtil;
+    
+    @Autowired
+    private CommunityRepository communityRepository;
+    
+    @Autowired
+    private CommunityMembershipRepository membershipRepository;
     
     public JwtResponse registerUser(RegisterRequest registerRequest) {
         // Basic validation
@@ -99,7 +110,32 @@ public class AuthService {
         user.setCompanyContactName(request.getCompanyContactName());
         user.setCompanyContactPhone(request.getCompanyContactPhone());
         
-        userRepository.save(user);
+        User savedUser = userRepository.save(user);
+        
+        // Automatically create a community for this company
+        Community companyCommunity = new Community();
+        companyCommunity.setName(request.getCompanyName() + " Community");
+        companyCommunity.setDescription("Official community for " + request.getCompanyName() + 
+                                      ". Connect with our team and stay updated on company news, opportunities, and discussions.");
+        companyCommunity.setCompany(savedUser);
+        companyCommunity.setCompanyId(savedUser.getId());
+        companyCommunity.setCompanyName(savedUser.getCompanyName());
+        companyCommunity.setPublic(true); // Company communities are public by default
+        
+        Community savedCommunity = communityRepository.save(companyCommunity);
+        
+        // Add the company as admin of their own community
+        CommunityMembership adminMembership = new CommunityMembership();
+        adminMembership.setUser(savedUser);
+        adminMembership.setUserId(savedUser.getId());
+        adminMembership.setUsername(savedUser.getUsername());
+        adminMembership.setCommunity(savedCommunity);
+        adminMembership.setCommunityId(savedCommunity.getId());
+        adminMembership.setRole(MembershipRole.ADMIN);
+        membershipRepository.save(adminMembership);
+        
+        System.out.println("Company registered: " + savedUser.getCompanyName() + 
+                          " with auto-created community: " + savedCommunity.getName());
         
         // Generate JWT token
         String jwt = jwtUtil.generateJwtToken(user.getUsername());

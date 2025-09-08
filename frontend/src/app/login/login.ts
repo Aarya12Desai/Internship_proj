@@ -37,7 +37,7 @@ export class LoginComponent {
       const formData = this.loginForm.value;
       console.log('Attempting user login for:', formData.email);
       
-      this.auth.login(formData.email, formData.password, 'USER').subscribe({
+      this.auth.login(formData.email, formData.password).subscribe({
         next: (response) => {
           console.log('User login successful, navigating to home...');
           // Fetch notifications after login

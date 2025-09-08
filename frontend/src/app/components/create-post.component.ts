@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { PostService } from '../services/post.service';
 import { Auth } from '../services/auth';
 import { CreatePostRequest, Post } from '../models/post.model';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
   selector: 'app-create-post',
@@ -23,22 +24,27 @@ import { CreatePostRequest, Post } from '../models/post.model';
       </div>
       
       <div class="image-upload-section" *ngIf="showImageUpload">
-        <input 
-          type="url" 
-          [(ngModel)]="imageUrl" 
-          placeholder="Enter image URL..."
-          class="image-url-input">
-        <div class="image-preview" *ngIf="imageUrl && !previewImageError">
-          <img [src]="resolveImageUrl(imageUrl)" (error)="onPreviewImageError()" alt="Image preview" class="preview-image">
+        <div class="file-input-wrapper">
+          <input 
+            type="file" 
+            #fileInput
+            (change)="onFileSelected($event)"
+            accept="image/*"
+            class="file-input"
+            id="imageFile">
+          <label for="imageFile" class="file-input-label">
+            📷 Choose Image
+          </label>
+          <span class="file-info" *ngIf="selectedFile">{{ selectedFile.name }} ({{ formatFileSize(selectedFile.size) }})</span>
+        </div>
+        
+        <div class="image-preview" *ngIf="imagePreviewUrl">
+          <img [src]="imagePreviewUrl" alt="Image preview" class="preview-image">
           <button type="button" class="remove-image-btn" (click)="removeImage()">×</button>
         </div>
-        <div class="image-preview error" *ngIf="imageUrl && previewImageError">
-          <div style="color:#e0245e; padding:8px;">Image preview failed to load. The link may not be a direct image or requires authentication.</div>
-          <div style="margin-top:8px; display:flex; gap:8px; align-items:center;">
-            <button type="button" class="option-btn" (click)="attemptConvertAndPreview()">Try convert link</button>
-            <button type="button" class="option-btn" (click)="removeImage()">Remove</button>
-            <div style="font-size:12px; color:#657786;">If conversion fails, try a direct image URL (ends with .jpg/.png) or upload to a public host.</div>
-          </div>
+        
+        <div class="upload-guidelines">
+          <small>Supported formats: JPG, PNG, GIF, WebP. Max size: 5MB</small>
         </div>
       </div>
       
@@ -118,26 +124,46 @@ import { CreatePostRequest, Post } from '../models/post.model';
       margin-bottom: 15px;
     }
 
-    .image-url-input {
-      width: 100%;
-      padding: 12px;
-      border: 1px solid #e1e8ed;
-      border-radius: 8px;
-      font-size: 14px;
-      font-family: inherit;
-      margin-bottom: 10px;
+    .file-input-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 12px;
     }
 
-    .image-url-input:focus {
-      outline: none;
+    .file-input {
+      display: none;
+    }
+
+    .file-input-label {
+      background: #f7f9fa;
+      border: 2px solid #e1e8ed;
+      border-radius: 8px;
+      padding: 8px 16px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: 500;
+      color: #1da1f2;
+      transition: all 0.2s;
+      display: inline-block;
+    }
+
+    .file-input-label:hover {
+      background: #e8f5fe;
       border-color: #1da1f2;
-      box-shadow: 0 0 0 2px rgba(29, 161, 242, 0.1);
+    }
+
+    .file-info {
+      font-size: 12px;
+      color: #657786;
+      flex: 1;
     }
 
     .image-preview {
       position: relative;
       display: inline-block;
       max-width: 100%;
+      margin-bottom: 10px;
     }
 
     .preview-image {
@@ -151,14 +177,14 @@ import { CreatePostRequest, Post } from '../models/post.model';
       position: absolute;
       top: 8px;
       right: 8px;
-      background: rgba(0,0,0,0.7);
+      background: rgba(0, 0, 0, 0.7);
       color: white;
       border: none;
       border-radius: 50%;
-      width: 30px;
-      height: 30px;
+      width: 24px;
+      height: 24px;
       cursor: pointer;
-      font-size: 18px;
+      font-size: 16px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -166,15 +192,19 @@ import { CreatePostRequest, Post } from '../models/post.model';
     }
 
     .remove-image-btn:hover {
-      background: rgba(0,0,0,0.9);
+      background: rgba(0, 0, 0, 0.9);
+    }
+
+    .upload-guidelines {
+      color: #657786;
+      font-size: 12px;
+      margin-top: 8px;
     }
 
     .create-post-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-top: 15px;
-      border-top: 1px solid #e1e8ed;
     }
 
     .post-options {
@@ -186,20 +216,16 @@ import { CreatePostRequest, Post } from '../models/post.model';
     .option-btn {
       background: none;
       border: none;
-      cursor: pointer;
       padding: 8px 12px;
-      border-radius: 6px;
+      border-radius: 20px;
+      cursor: pointer;
       font-size: 14px;
       color: #1da1f2;
       transition: background-color 0.2s;
-      display: flex;
-      align-items: center;
-      gap: 6px;
     }
 
-    .option-btn:hover,
-    .option-btn.active {
-      background-color: rgba(29, 161, 242, 0.1);
+    .option-btn:hover, .option-btn.active {
+      background: rgba(29, 161, 242, 0.1);
     }
 
     .character-count {
@@ -242,28 +268,58 @@ export class CreatePostComponent {
   @Output() postCreated = new EventEmitter<Post>();
 
   postContent = '';
-  imageUrl = '';
   showImageUpload = false;
   isLoading = false;
-  previewImageError = false;
-
-  /** Attempted converted URL cached to avoid repeated failures */
-  private lastAttemptedConversion?: string;
+  selectedFile: File | null = null;
+  imagePreviewUrl: string | null = null;
 
   constructor(
     private postService: PostService,
-    private auth: Auth
+    private auth: Auth,
+    private http: HttpClient
   ) {}
 
   toggleImageUpload() {
     this.showImageUpload = !this.showImageUpload;
     if (!this.showImageUpload) {
-      this.imageUrl = '';
+      this.removeImage();
+    }
+  }
+
+  onFileSelected(event: any) {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file.');
+        return;
+      }
+
+      // Validate file size (5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('File size should not exceed 5MB.');
+        return;
+      }
+
+      this.selectedFile = file;
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        this.imagePreviewUrl = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
   }
 
   removeImage() {
-    this.imageUrl = '';
+    this.selectedFile = null;
+    this.imagePreviewUrl = null;
+    // Reset file input
+    const fileInput = document.getElementById('imageFile') as HTMLInputElement;
+    if (fileInput) {
+      fileInput.value = '';
+    }
   }
 
   canPost(): boolean {
@@ -277,34 +333,51 @@ export class CreatePostComponent {
 
     this.isLoading = true;
 
-    const normalized = this.normalizeImageUrl(this.imageUrl);
-    const request: CreatePostRequest = {
-      content: this.postContent.trim(),
-      imageUrl: normalized || undefined
-    };
+    if (this.selectedFile) {
+      // Create post with image upload
+      const formData = new FormData();
+      formData.append('content', this.postContent.trim());
+      formData.append('image', this.selectedFile);
 
-    console.log('Creating post with request:', request);
+      this.http.post<Post>('http://localhost:8081/api/posts/with-image', formData).subscribe({
+        next: (post) => {
+          console.log('Post created successfully:', post);
+          this.postCreated.emit(post);
+          this.resetForm();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error creating post:', error);
+          alert(`Error creating post: ${error.error?.message || error.message || 'Unknown error'}`);
+          this.isLoading = false;
+        }
+      });
+    } else {
+      // Create text-only post
+      const request: CreatePostRequest = {
+        content: this.postContent.trim()
+      };
 
-    this.postService.createPost(request).subscribe({
-      next: (post) => {
-        console.log('Post created successfully:', post);
-        this.postCreated.emit(post);
-        this.resetForm();
-        this.isLoading = false;
-      },
-      error: (error) => {
-        console.error('Error creating post:', error);
-        alert(`Error creating post: ${error.error?.message || error.message || 'Unknown error'}`);
-        this.isLoading = false;
-      }
-    });
+      this.postService.createPost(request).subscribe({
+        next: (post) => {
+          console.log('Post created successfully:', post);
+          this.postCreated.emit(post);
+          this.resetForm();
+          this.isLoading = false;
+        },
+        error: (error) => {
+          console.error('Error creating post:', error);
+          alert(`Error creating post: ${error.error?.message || error.message || 'Unknown error'}`);
+          this.isLoading = false;
+        }
+      });
+    }
   }
 
   private resetForm() {
     this.postContent = '';
-    this.imageUrl = '';
-  this.previewImageError = false;
     this.showImageUpload = false;
+    this.removeImage();
   }
 
   getCurrentUserInitial(): string {
@@ -315,96 +388,11 @@ export class CreatePostComponent {
     return 'U';
   }
 
-  onPreviewImageError() {
-    this.previewImageError = true;
-  }
-
-  /**
-   * Convert known sharing URLs to a direct image URL suitable for <img src=>.
-   * Handles Google Drive `/file/d/ID` and `/open?id=ID` patterns.
-   */
-  normalizeImageUrl(url: string | undefined): string | undefined {
-    if (!url) return undefined;
-    const u = url.trim();
-
-    try {
-      // Google Drive file link: /file/d/FILEID
-      const driveFileMatch = u.match(/drive\.google\.com\/file\/d\/([-_a-zA-Z0-9]+)/);
-      if (driveFileMatch && driveFileMatch[1]) {
-        return `https://drive.google.com/uc?export=view&id=${driveFileMatch[1]}`;
-      }
-
-      const openIdMatch = u.match(/[?&]id=([-_a-zA-Z0-9]+)/);
-      if (u.includes('drive.google.com') && openIdMatch && openIdMatch[1]) {
-        return `https://drive.google.com/uc?export=view&id=${openIdMatch[1]}`;
-      }
-
-      // Common Google redirect links include url?q=ACTUAL_URL or /imgres?imgurl=ACTUAL_URL
-      const urlQ = u.match(/[?&]url=([^&]+)/) || u.match(/url\?q=([^&]+)/);
-      if (urlQ && urlQ[1]) {
-        try {
-          return decodeURIComponent(urlQ[1]);
-        } catch (_) {
-          return urlQ[1];
-        }
-      }
-
-      const imgres = u.match(/imgres\?imgurl=([^&]+)/);
-      if (imgres && imgres[1]) {
-        try { return decodeURIComponent(imgres[1]); } catch (_) { return imgres[1]; }
-      }
-
-      const imgurlParam = u.match(/[?&]imgurl=([^&]+)/);
-      if (imgurlParam && imgurlParam[1]) {
-        try { return decodeURIComponent(imgurlParam[1]); } catch (_) { return imgurlParam[1]; }
-      }
-
-      // Google redirect pattern used in search result link sharing (e.g., /url?q=...&sa=...)
-      const urlQ2 = u.match(/\/url\?q=([^&]+)/);
-      if (urlQ2 && urlQ2[1]) {
-        try { return decodeURIComponent(urlQ2[1]); } catch (_) { return urlQ2[1]; }
-      }
-
-      // If it already looks like a gstatic/googleusercontent/encrypted thumbnail, return as-is
-      if (u.includes('gstatic.com') || u.includes('googleusercontent.com') || u.includes('encrypted-tbn0')) {
-        return u;
-      }
-
-      return u;
-    } catch (err) {
-      console.warn('normalizeImageUrl error', err);
-      return u;
-    }
-  }
-
-  resolveImageUrl(url: string | undefined): string | undefined {
-    return this.normalizeImageUrl(url);
-  }
-
-  /** Try to auto-convert the pasted link (useful for Google Image search links). */
-  attemptConvertAndPreview() {
-    if (!this.imageUrl) return;
-    const converted = this.normalizeImageUrl(this.imageUrl);
-    // Avoid looping on the same failed conversion
-    if (this.lastAttemptedConversion === converted) {
-      // already tried
-      return;
-    }
-    this.lastAttemptedConversion = converted;
-    if (converted && converted !== this.imageUrl) {
-      this.imageUrl = converted;
-      this.previewImageError = false;
-      // small delay lets the img element pick up the new src
-      setTimeout(() => {
-        // nothing else; browser will trigger error or success
-      }, 200);
-    } else {
-      // try extracting imgurl from query parameters explicitly
-      const alt = this.normalizeImageUrl(this.imageUrl);
-      if (alt && alt !== this.imageUrl) {
-        this.imageUrl = alt;
-        this.previewImageError = false;
-      }
-    }
+  formatFileSize(bytes: number): string {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
   }
 }

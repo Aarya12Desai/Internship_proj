@@ -30,15 +30,15 @@ export class Auth {
     return this.http.post<any>(`${this.API_BASE_URL}/register`, signupData);
   }
 
-  login(email: string, password: string, role?: string): Observable<any> {
-    const loginData: any = { email, password };
-    if (role) loginData.role = role;
+  login(email: string, password: string): Observable<any> {
+    const loginData = { email, password };
     
     return this.http.post<any>(`${this.API_BASE_URL}/login`, loginData).pipe(
       tap(response => {
         console.log('Login response received:', response);
         if (response && response.token && this.isBrowser) {
           localStorage.setItem('access_token', response.token);
+          localStorage.setItem('user_id', response.id.toString());
           localStorage.setItem('user_email', response.email);
           localStorage.setItem('username', response.username);
           localStorage.setItem('user_role', response.role);
@@ -75,6 +75,7 @@ export class Auth {
     console.log('Logging out user...');
     if (this.isBrowser) {
       localStorage.removeItem('access_token');
+      localStorage.removeItem('user_id');
       localStorage.removeItem('user_email');
       localStorage.removeItem('username');
       localStorage.removeItem('user_role');
@@ -104,6 +105,7 @@ export class Auth {
   get currentUser(): any {
     if (this.isLoggedIn && this.isBrowser) {
       return {
+        id: localStorage.getItem('user_id'),
         email: localStorage.getItem('user_email'),
         username: localStorage.getItem('username'),
         role: localStorage.getItem('user_role'),

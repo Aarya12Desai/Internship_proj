@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+﻿import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login';
 import { Signup } from './signup/signup';
 import { Landing } from './landing/landing';
@@ -12,7 +12,6 @@ import { CompanySignupComponent } from './company-signup/company-signup';
 import { CompanyLoginComponent } from './company-login/company-login';
 import { CompanyHomeComponent } from './company-home/company-home';
 import { CompanyProjectsComponent } from './company-projects/company-projects';
-import { CompanyProjectsBrowseComponent } from './company-projects-browse/company-projects-browse';
 import { CompanyCreateProjectComponent } from './company-create-project/company-create-project';
 import { CommunityChatComponent } from './community-chat/community-chat';
 import { UserCreateProjectComponent } from './user-create-project/user-create-project';
@@ -28,7 +27,6 @@ export const routes: Routes = [
   { path: 'projects', component: ProjectsComponent, canActivate: [authGuard] },
   { path: 'create-project', component: UserCreateProjectComponent, canActivate: [authGuard] },
   { path: 'browse-projects', component: UserProjectsBrowseComponent, canActivate: [authGuard] },
-  { path: 'browse-company-projects', component: CompanyProjectsBrowseComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'messages', component: Messages, canActivate: [authGuard] },
   
@@ -38,5 +36,5 @@ export const routes: Routes = [
   { path: 'company/create-project', component: CompanyCreateProjectComponent, canActivate: [authGuard] },
   { path: 'company/community-chat', component: CommunityChatComponent, canActivate: [authGuard] },
   
-  { path: '**', redirectTo: '' } // Wildcard route for handling invalid URLs
+  { path: '**', redirectTo: '' }
 ];

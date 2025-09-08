@@ -26,7 +26,7 @@ import { CommentsComponent } from './comments.component';
       <!-- Post Content -->
       <div class="post-content">
         <p>{{ post.content }}</p>
-  <img *ngIf="post.imageUrl && !imageLoadError" [src]="resolveImageUrl(post.imageUrl)" (error)="onImageError()" alt="Post image" class="post-image">
+        <img *ngIf="post.imageUrl && !imageLoadError" [src]="getImageUrl(post.imageUrl)" (error)="onImageError()" alt="Post image" class="post-image">
       </div>
 
       <!-- Post Stats -->
@@ -231,36 +231,18 @@ export class PostComponent {
   }
 
   /**
-   * Resolve an image URL. If the URL points to a Wikipedia/File page (contains '/wiki/File:'),
-   * convert it to a direct file path which redirects to the real image binary via
-   * Special:FilePath. Otherwise return the original URL.
+   * Get the correct image URL - if it's a relative path from our backend, convert to full URL
    */
-  resolveImageUrl(url: string | undefined): string | undefined {
+  getImageUrl(url: string | undefined): string | undefined {
     if (!url) return url;
-    try {
-      const u = url.trim();
-      // Example page URL: https://en.wikipedia.org/wiki/File:Example.jpg
-      const wikiFileIndex = u.indexOf('/wiki/File:');
-      if (wikiFileIndex !== -1) {
-        // extract the filename after '/wiki/File:' and build a Special:FilePath URL
-        const filename = u.substring(wikiFileIndex + '/wiki/File:'.length);
-        // Use Wikimedia Commons Special:FilePath which redirects to the raw image
-        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}`;
-      }
-
-      // If the URL is a Wikipedia page that links to media on upload.wikimedia.org but not /wiki/File,
-      // sometimes pages include direct links to /w/index.php?title=File:...; handle that as well.
-      const wpFileParam = u.match(/title=File:(.+)$/i);
-      if (wpFileParam && wpFileParam[1]) {
-        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(wpFileParam[1])}`;
-      }
-
-      // Otherwise return the original URL unchanged
-      return u;
-    } catch (err) {
-      console.warn('Failed to resolve image URL', url, err);
-      return url;
+    
+    // If the URL starts with /api/files/images/ it's from our backend
+    if (url.startsWith('/api/files/images/')) {
+      return `http://localhost:8081${url}`;
     }
+    
+    // Otherwise, treat as external URL
+    return url;
   }
 
   onImageError() {

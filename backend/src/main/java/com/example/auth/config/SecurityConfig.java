@@ -66,6 +66,8 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/api/upload/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/uploads/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/test/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/communities/**")).authenticated()
+                .requestMatchers(new AntPathRequestMatcher("/api/community-chat/**")).authenticated()
                 .requestMatchers(new AntPathRequestMatcher("/error")).permitAll() // For error pages
                 .requestMatchers(new AntPathRequestMatcher("/actuator/**")).permitAll() // For actuator endpoints
                 .anyRequest().authenticated()

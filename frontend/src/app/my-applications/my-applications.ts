@@ -24,10 +24,6 @@ import { HttpClient, HttpHeaders } from '@angular/common/http';
         <i class="fas fa-inbox"></i>
         <h3>No applications yet</h3>
         <p>You haven't applied to any company projects yet.</p>
-        <button class="btn-browse" (click)="browseProjects()">
-          <i class="fas fa-search"></i>
-          Browse Projects
-        </button>
       </div>
 
       <div *ngIf="!isLoading && applications.length > 0" class="applications-list">
@@ -138,10 +134,6 @@ export class MyApplicationsComponent implements OnInit {
           this.isLoading = false;
         }
       });
-  }
-
-  browseProjects() {
-    this.router.navigate(['/browse-company-projects']);
   }
 
   viewProject(project: any) {
