@@ -15,6 +15,8 @@ import { CompanyProjectsComponent } from './company-projects/company-projects';
 import { CompanyCreateProjectComponent } from './company-create-project/company-create-project';
 import { CommunityChatComponent } from './community-chat/community-chat';
 import { UserCreateProjectComponent } from './user-create-project/user-create-project';
+
+import { AiMatchingComponent } from './ai-matching/ai-matching.component';
 import { UserProjectsBrowseComponent } from './user-projects-browse/user-projects-browse';
 
 export const routes: Routes = [
@@ -29,6 +31,7 @@ export const routes: Routes = [
   { path: 'browse-projects', component: UserProjectsBrowseComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'messages', component: Messages, canActivate: [authGuard] },
+  { path: 'ai-matching', component: AiMatchingComponent, canActivate: [authGuard] },
   
   // Company routes
   { path: 'company/home', component: CompanyHomeComponent, canActivate: [authGuard] },

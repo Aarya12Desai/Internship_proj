@@ -51,25 +51,22 @@ import { Auth } from '../services/auth';
           </div>
 
           <div class="form-group">
-            <label for="country">Country</label>
-            <input 
-              type="text" 
-              id="country"
-              name="country"
-              [(ngModel)]="project.country" 
-              placeholder="Your country"
-            />
+            <label for="image">Project Image</label>
+            <input type="file" id="image" name="image" (change)="onImageSelected($event)" accept="image/*" />
+            <div *ngIf="imagePreview" class="image-preview">
+              <img [src]="imagePreview" alt="Project Image Preview" style="max-width: 200px; max-height: 200px; margin-top: 10px;" />
+              <button type="button" (click)="removeImage()">Remove Image</button>
+            </div>
           </div>
 
           <div class="form-group">
-            <label for="language">Primary Language</label>
-            <input 
-              type="text" 
-              id="language"
-              name="language"
-              [(ngModel)]="project.language" 
-              placeholder="Primary language for communication"
-            />
+            <label for="technologiesUsed">Technologies Used *</label>
+            <input type="text" id="technologiesUsed" name="technologiesUsed" [(ngModel)]="project.technologiesUsed" placeholder="e.g. Angular, Spring Boot, MySQL" required />
+          </div>
+
+          <div class="form-group">
+            <label for="domain">Domain *</label>
+            <input type="text" id="domain" name="domain" [(ngModel)]="project.domain" placeholder="e.g. FinTech, HealthTech, EdTech" required />
           </div>
 
           <div *ngIf="error()" class="error-message">
@@ -251,9 +248,28 @@ export class UserCreateProjectComponent {
   project = {
     name: '',
     description: '',
-    country: '',
-    language: ''
+    image: '',
+    technologiesUsed: '',
+    domain: ''
   };
+  imagePreview: string | null = null;
+  onImageSelected(event: Event) {
+    const input = event.target as HTMLInputElement;
+    if (input.files && input.files[0]) {
+      const file = input.files[0];
+      const reader = new FileReader();
+      reader.onload = (e: any) => {
+        this.imagePreview = e.target.result;
+  this.project.image = this.imagePreview || '';
+      };
+      reader.readAsDataURL(file);
+    }
+  }
+
+  removeImage() {
+    this.imagePreview = null;
+    this.project.image = '';
+  }
 
   loading = signal(false);
   error = signal<string | null>(null);
@@ -285,8 +301,9 @@ export class UserCreateProjectComponent {
     const payload = {
       name: this.project.name.trim(),
       description: this.project.description.trim(),
-      country: this.project.country.trim() || null,
-      language: this.project.language.trim() || null
+      image: this.project.image || null,
+      technologiesUsed: this.project.technologiesUsed.trim(),
+      domain: this.project.domain.trim()
     };
 
     this.http.post<any>('http://localhost:8081/api/projects', payload, { headers })

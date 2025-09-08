@@ -78,16 +78,16 @@ public class NotificationService {
         // Create detailed match information
         String matchDetails = String.format(
             "Match found between projects:\n" +
-            "Your Project: %s (Country: %s, Language: %s)\n" +
-            "Matched Project: %s (Country: %s, Language: %s)\n" +
+            "Your Project: %s (Domain: %s, Tech: %s)\n" +
+            "Matched Project: %s (Domain: %s, Tech: %s)\n" +
             "Similarity Score: %.1f%%\n" +
             "Creator: %s",
             matchedProject.getName(),
-            matchedProject.getCountry(),
-            matchedProject.getLanguage(),
+            matchedProject.getDomain(),
+            matchedProject.getTechnologiesUsed(),
             newProject.getName(),
-            newProject.getCountry(),
-            newProject.getLanguage(),
+            newProject.getDomain(),
+            newProject.getTechnologiesUsed(),
             similarityScore * 100,
             newProject.getCreatorUsername() != null ? newProject.getCreatorUsername() : "Unknown"
         );

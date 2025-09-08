@@ -1,16 +1,23 @@
 import { Component, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { CommentsComponent } from '../components/comments.component';
 import { Router } from '@angular/router';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Auth } from '../services/auth';
+import { Notifications } from '../services/notifications';
+
+interface SendNotificationRequest {
+  userId: number;
+  title: string;
+  message: string;
+  type: string;
+}
 
 interface UserProject {
   id: number;
   name: string;
   description: string;
-  country?: string;
-  language?: string;
   createdAt: string;
   creatorUsername?: string;
 }
@@ -18,7 +25,7 @@ interface UserProject {
 @Component({
   selector: 'app-user-projects-browse',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, CommentsComponent],
   template: `
     <div class="browse-projects-container">
       <div class="page-header">
@@ -38,38 +45,7 @@ interface UserProject {
           >
         </div>
         
-        <div class="filter-group">
-          <label for="countryFilter">Country:</label>
-          <input 
-            type="text" 
-            id="countryFilter" 
-            [(ngModel)]="selectedCountry" 
-            (input)="filterProjects()" 
-            placeholder="Filter by country..."
-          >
-        </div>
-
-        <div class="filter-group">
-          <label for="languageFilter">Language:</label>
-          <input 
-            type="text" 
-            id="languageFilter" 
-            [(ngModel)]="selectedLanguage" 
-            (input)="filterProjects()" 
-            placeholder="Filter by language..."
-          >
-        </div>
-
-        <div class="filter-actions">
-          <button class="btn-clear" (click)="clearFilters()">
-            <i class="fas fa-times"></i>
-            Clear Filters
-          </button>
-          <button class="btn-refresh" (click)="loadProjects()">
-            <i class="fas fa-sync-alt"></i>
-            Refresh
-          </button>
-        </div>
+  <!-- Removed country/language filters, clear, and refresh buttons as requested -->
       </div>
 
       <div class="results-info" *ngIf="!loading()">
@@ -90,10 +66,10 @@ interface UserProject {
       <div *ngIf="!loading() && !error() && filteredProjects().length === 0" class="empty-state">
         <i class="fas fa-search"></i>
         <h3>No projects found</h3>
-        <p *ngIf="searchTerm || selectedCountry || selectedLanguage">
-          Try adjusting your search filters to find more projects.
+        <p *ngIf="searchTerm">
+          Try adjusting your search to find more projects.
         </p>
-        <p *ngIf="!searchTerm && !selectedCountry && !selectedLanguage">
+        <p *ngIf="!searchTerm">
           No user projects available yet. Check back later or create your own project!
         </p>
         <button class="btn-primary" routerLink="/create-project">
@@ -125,18 +101,7 @@ interface UserProject {
               {{project.description | slice:0:200}}{{(project.description && project.description.length > 200) ? '...' : ''}}
             </p>
             
-            <div class="project-details">
-              <div class="detail-row">
-                <div class="detail-item" *ngIf="project.country">
-                  <i class="fas fa-map-marker-alt"></i>
-                  <strong>Country:</strong> {{project.country}}
-                </div>
-                <div class="detail-item" *ngIf="project.language">
-                  <i class="fas fa-globe"></i>
-                  <strong>Language:</strong> {{project.language}}
-                </div>
-              </div>
-            </div>
+            <!-- Removed country/language display from project card -->
           </div>
           
           <div class="project-footer">
@@ -172,24 +137,13 @@ interface UserProject {
               Created on {{selectedProject()?.createdAt ? formatDate(selectedProject()!.createdAt) : 'N/A'}}
             </p>
           </div>
-          
           <div class="project-full-description">
             <h4>Project Description</h4>
             <p>{{selectedProject()?.description}}</p>
           </div>
-          
-          <div class="project-metadata" *ngIf="selectedProject()?.country || selectedProject()?.language">
-            <h4>Project Details</h4>
-            <div class="metadata-grid">
-              <div *ngIf="selectedProject()?.country" class="metadata-item">
-                <i class="fas fa-map-marker-alt"></i>
-                <strong>Country:</strong> {{selectedProject()?.country}}
-              </div>
-              <div *ngIf="selectedProject()?.language" class="metadata-item">
-                <i class="fas fa-globe"></i>
-                <strong>Language:</strong> {{selectedProject()?.language}}
-              </div>
-            </div>
+          <div class="project-comments-section">
+            <h4>Comments</h4>
+            <app-comments *ngIf="selectedProject()" [postId]="selectedProject()!.id"></app-comments>
           </div>
         </div>
         <div class="modal-footer">
@@ -679,7 +633,8 @@ export class UserProjectsBrowseComponent implements OnInit {
   constructor(
     private http: HttpClient,
     private auth: Auth,
-    private router: Router
+    private router: Router,
+    private notifications: Notifications
   ) {}
 
   ngOnInit() {
@@ -714,24 +669,9 @@ export class UserProjectsBrowseComponent implements OnInit {
         project.name.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         project.description.toLowerCase().includes(this.searchTerm.toLowerCase()) ||
         (project.creatorUsername && project.creatorUsername.toLowerCase().includes(this.searchTerm.toLowerCase()));
-      
-      const matchesCountry = !this.selectedCountry || 
-        (project.country && project.country.toLowerCase().includes(this.selectedCountry.toLowerCase()));
-      
-      const matchesLanguage = !this.selectedLanguage || 
-        (project.language && project.language.toLowerCase().includes(this.selectedLanguage.toLowerCase()));
-      
-      return matchesSearch && matchesCountry && matchesLanguage;
+      return matchesSearch;
     });
-
     this.filteredProjects.set(filtered);
-  }
-
-  clearFilters() {
-    this.searchTerm = '';
-    this.selectedCountry = '';
-    this.selectedLanguage = '';
-    this.filteredProjects.set(this.projects());
   }
 
   viewProject(project: UserProject) {
@@ -753,10 +693,32 @@ export class UserProjectsBrowseComponent implements OnInit {
     const message = prompt(`Send a message to ${project.creatorUsername} about "${project.name}":`);
     
     if (message && message.trim()) {
-      // For now, we'll just show a success message
-      // In a real implementation, this would send a message or create a connection
-      alert(`Message sent to ${project.creatorUsername}! They will be notified of your interest in their project.`);
-      this.closeModal();
+      // Send notification to the user (project creator) via backend API
+      const notificationPayload: SendNotificationRequest = {
+        userId: (project as any).creatorId || (project as any).userId || project.id, // Try to get creatorId, fallback to project.id
+        title: 'New Connection Request',
+        message: `A company is interested in your project "${project.name}" and sent: "${message.trim()}"`,
+        type: 'project_match'
+      };
+      this.http.post('http://localhost:8081/api/notifications/send', notificationPayload).subscribe({
+        next: () => {
+          alert(`Message sent to ${project.creatorUsername}! They will be notified of your interest in their project.`);
+          this.closeModal();
+        },
+        error: (err) => {
+          // Fallback: add local notification if backend fails
+          this.notifications.addNotification({
+            type: 'project_match',
+            title: 'New Connection Request',
+            message: notificationPayload.message,
+            read: false,
+            userName: project.creatorUsername || 'User',
+            userId: notificationPayload.userId.toString()
+          });
+          alert('Backend notification failed, but local notification added.');
+          this.closeModal();
+        }
+      });
     }
   }
 

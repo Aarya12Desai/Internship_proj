@@ -26,7 +26,11 @@ import { CommentsComponent } from './comments.component';
       <!-- Post Content -->
       <div class="post-content">
         <p>{{ post.content }}</p>
-        <img *ngIf="post.imageUrl && !imageLoadError" [src]="getImageUrl(post.imageUrl)" (error)="onImageError()" alt="Post image" class="post-image">
+        <img *ngIf="post.imageUrl && !imageLoadError" 
+             [src]="resolveImageUrl(post.imageUrl)" 
+             (error)="onImageError()" 
+             alt="Post image" 
+             class="post-image">
       </div>
 
       <!-- Post Stats -->
@@ -47,12 +51,12 @@ import { CommentsComponent } from './comments.component';
           {{ post.isLikedByCurrentUser ? 'Unlike' : 'Like' }}
         </button>
         
-        <button class="action-btn comment-btn" (click)="toggleComments()">
-          💬 Comment
+        <button class="action-btn comment-btn" (click)="toggleComments(true)">
+          Comment
         </button>
         
-        <button class="action-btn share-btn">
-          🔄 Share
+        <button class="action-btn view-btn" (click)="toggleComments(false)">
+          View
         </button>
       </div>
 
@@ -60,6 +64,7 @@ import { CommentsComponent } from './comments.component';
       <app-comments 
         *ngIf="showComments" 
         [postId]="post.id"
+        [showAddCommentBox]="showAddCommentBox"
         class="comments-section">
       </app-comments>
     </article>
@@ -192,6 +197,7 @@ export class PostComponent {
   @Output() postUpdated = new EventEmitter<Post>();
 
   showComments = false;
+  showAddCommentBox = false;
   isLiking = false;
   imageLoadError = false;
 
@@ -219,34 +225,40 @@ export class PostComponent {
     });
   }
 
-  toggleComments() {
-    this.showComments = !this.showComments;
+  toggleComments(addBox: boolean) {
+    this.showAddCommentBox = addBox;
+    this.showComments = true;
   }
 
   ngOnChanges(changes: SimpleChanges) {
     if (changes['post']) {
-      // reset image error state when a new post is loaded
       this.imageLoadError = false;
     }
   }
 
-  /**
-   * Get the correct image URL - if it's a relative path from our backend, convert to full URL
-   */
-  getImageUrl(url: string | undefined): string | undefined {
+  resolveImageUrl(url: string | undefined): string | undefined {
     if (!url) return url;
-    
-    // If the URL starts with /api/files/images/ it's from our backend
-    if (url.startsWith('/api/files/images/')) {
-      return `http://localhost:8081${url}`;
+    try {
+      const u = url.trim();
+      const wikiFileIndex = u.indexOf('/wiki/File:');
+      if (wikiFileIndex !== -1) {
+        const filename = u.substring(wikiFileIndex + '/wiki/File:'.length);
+        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(filename)}`;
+      }
+
+      const wpFileParam = u.match(/title=File:(.+)$/i);
+      if (wpFileParam && wpFileParam[1]) {
+        return `https://commons.wikimedia.org/wiki/Special:FilePath/${encodeURIComponent(wpFileParam[1])}`;
+      }
+
+      return u;
+    } catch (err) {
+      console.warn('Failed to resolve image URL', url, err);
+      return url;
     }
-    
-    // Otherwise, treat as external URL
-    return url;
   }
 
   onImageError() {
-    // hide the image if it fails to load
     this.imageLoadError = true;
   }
 

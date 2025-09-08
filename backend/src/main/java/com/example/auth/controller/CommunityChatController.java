@@ -69,15 +69,20 @@ public class CommunityChatController {
             User user = userOpt.get();
             System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
             
-            // Check if user is a member of this community
-            if (!membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
+            // Allow all users to view messages in the global chat (communityId == 0)
+            if (communityId != 0 && !membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "You must be a member of this community to view messages"));
             }
             
-            List<CommunityChat> messages = communityChatRepository.findTop50ByCommunityIdOrderByCreatedAtDesc(communityId);
+            List<CommunityChat> messages;
+            if (communityId == 0) {
+                // For global chat, show all messages (or you can limit to a higher number if needed)
+                messages = communityChatRepository.findByCommunityIdOrderByCreatedAtDesc(0L);
+            } else {
+                messages = communityChatRepository.findTop50ByCommunityIdOrderByCreatedAtDesc(communityId);
+            }
             System.out.println("Community Chat - Retrieved " + messages.size() + " messages for community " + communityId);
-            
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
             System.err.println("Community Chat - Error fetching messages: " + e.getMessage());
@@ -108,38 +113,41 @@ public class CommunityChatController {
             User user = userOpt.get();
             System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
             
-            // Check if user is a member of this community
-            if (!membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
+            // Allow all users to send messages in the global chat (communityId == 0)
+            if (communityId != 0 && !membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "You must be a member of this community to send messages"));
             }
-            
-            // Get community details
-            Optional<Community> communityOpt = communityRepository.findById(communityId);
-            if (communityOpt.isEmpty()) {
-                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Community not found"));
-            }
-            
-            Community community = communityOpt.get();
             
             String messageText = request.get("message");
             if (messageText == null || messageText.trim().isEmpty()) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Message cannot be empty"));
             }
-            
+
             CommunityChat chatMessage = new CommunityChat();
             chatMessage.setMessage(messageText.trim());
             chatMessage.setSender(user);
             chatMessage.setSenderId(user.getId());
             chatMessage.setSenderCompanyName(user.getRole() == Role.COMPANY ? user.getCompanyName() : user.getUsername());
-            chatMessage.setCommunity(community);
             chatMessage.setCommunityId(communityId);
-            chatMessage.setCommunityName(community.getName());
             chatMessage.setCreatedAt(LocalDateTime.now());
-            
+
+            if (communityId == 0) {
+                chatMessage.setCommunityName("Global");
+            } else {
+                // Get community details
+                Optional<Community> communityOpt = communityRepository.findById(communityId);
+                if (communityOpt.isEmpty()) {
+                    return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Community not found"));
+                }
+                Community community = communityOpt.get();
+                chatMessage.setCommunity(community);
+                chatMessage.setCommunityName(community.getName());
+            }
+
             CommunityChat savedMessage = communityChatRepository.save(chatMessage);
-            System.out.println("Community Chat - Message saved with ID: " + savedMessage.getId() + " in community " + community.getName());
-            
+            System.out.println("Community Chat - Message saved with ID: " + savedMessage.getId() + " in communityId " + communityId);
+
             return ResponseEntity.ok(savedMessage);
         } catch (Exception e) {
             System.err.println("Community Chat - Error sending message: " + e.getMessage());

@@ -30,23 +30,9 @@ interface ChatStats {
       <div class="chat-header">
         <div class="chat-title">
           <h2>{{ activeCommunityName() ? '�️ ' + activeCommunityName() : '�🌐 Community Chat' }}</h2>
-          <div *ngIf="!activeCommunityName()" class="no-community-notice">
-            <span>⚠️ No community selected. <a href="/communities">Browse communities</a> to join one!</span>
-          </div>
+          <!-- Removed browse/choose community notice for company -->
         </div>
-        <div class="chat-stats">
-          <span class="stat-item">📊 {{ chatStats().totalMessages || 0 }} total</span>
-          <span class="stat-item">🕒 {{ chatStats().recentMessages || 0 }} in 24h</span>
-          <button (click)="refreshMessages()" class="refresh-btn" [disabled]="isLoading()">
-            {{ isLoading() ? '⏳' : '🔄' }} Refresh
-          </button>
-          <button *ngIf="!activeCommunityName()" (click)="createTestMessage()" class="test-btn" [disabled]="isLoading()">
-            🧪 Test Message
-          </button>
-          <button (click)="goBackToCommunities()" class="back-btn">
-            ← Back to Communities
-          </button>
-        </div>
+  <!-- Removed chat-stats, refresh, test, total, and time UI -->
       </div>
 
       <!-- Error Message -->
@@ -72,11 +58,9 @@ interface ChatStats {
         <div *ngIf="messages().length === 0 && !isLoading()" class="no-messages">
           <div class="empty-state">
             <div class="empty-icon">💬</div>
-            <h3>{{ activeCommunityName() ? 'No messages yet' : 'No community selected' }}</h3>
-            <p>{{ activeCommunityName() ? 'Be the first to start the conversation!' : 'Join a community to start chatting!' }}</p>
-            <button *ngIf="!activeCommunityName()" (click)="goBackToCommunities()" class="join-community-btn">
-              🏘️ Browse Communities
-            </button>
+            <h3>No messages yet</h3>
+            <p>Be the first to start the conversation!</p>
+            <!-- Removed browse communities button for company -->
           </div>
         </div>
 
@@ -128,7 +112,7 @@ interface ChatStats {
       </div>
 
       <!-- Message Input -->
-      <div class="message-input-area" *ngIf="activeCommunityName()">
+  <div class="message-input-area">
         <div class="input-container">
           <textarea 
             [(ngModel)]="newMessage" 
@@ -140,7 +124,6 @@ interface ChatStats {
             #messageInput>
           </textarea>
           <div class="input-actions">
-            <span class="char-count">{{ newMessage().length }}/1000</span>
             <button 
               (click)="sendMessage()" 
               class="send-btn"
@@ -152,14 +135,7 @@ interface ChatStats {
       </div>
 
       <!-- No Community Selected Message -->
-      <div class="no-community-input" *ngIf="!activeCommunityName()">
-        <div class="no-community-message">
-          <p>📝 Select a community to start messaging</p>
-          <button (click)="goBackToCommunities()" class="select-community-btn">
-            🏘️ Browse Communities
-          </button>
-        </div>
-      </div>
+  <!-- Removed choose/browse community input for company -->
     </div>
   `,
   styles: [`
@@ -773,11 +749,9 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.clearError();
 
-      const communityId = this.activeCommunityId();
+      let communityId = this.activeCommunityId();
       if (!communityId) {
-        this.setError('No community selected. Please select a community first.');
-        this.messages.set([]);
-        return;
+        communityId = 0; // Use 0 as the default/global community
       }
 
       const response = await this.http.get<ChatMessage[]>(`${this.baseUrl}/${communityId}/messages`, {
@@ -815,11 +789,10 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
     const messageText = this.newMessage().trim();
     if (!messageText) return;
 
-    // Check if we have an active community for community-specific messaging
-    const communityId = this.activeCommunityId();
+    // For company, allow sending even if no community is selected
+    let communityId = this.activeCommunityId();
     if (!communityId) {
-      this.setError('No community selected. Please select a community first.');
-      return;
+      communityId = 0; // Use 0 as the default/global community
     }
 
     try {

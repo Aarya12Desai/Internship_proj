@@ -62,84 +62,9 @@
 
     <!-- Notification Categories Filter -->
     <div class="notifications-sidebar">
-      <div class="filter-section">
-        <h3>Filter by type</h3>
-        <div class="filter-options">
-          <button class="filter-btn" 
-                  [class.active]="selectedFilter === 'all'"
-                  (click)="setFilter('all')">
-            All ({{notifications.length}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'unread'"
-                  (click)="setFilter('unread')">
-            Unread ({{unreadCount}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'like'"
-                  (click)="setFilter('like')">
-            ❤️ Likes ({{getCountByType('like')}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'comment'"
-                  (click)="setFilter('comment')">
-            💬 Comments ({{getCountByType('comment')}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'follow'"
-                  (click)="setFilter('follow')">
-            👥 Follows ({{getCountByType('follow')}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'project_match'"
-                  (click)="setFilter('project_match')">
-            🤝 Project Matches ({{getCountByType('project_match')}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'mention'"
-                  (click)="setFilter('mention')">
-            @ Mentions ({{getCountByType('mention')}})
-          </button>
-          
-          <button class="filter-btn"
-                  [class.active]="selectedFilter === 'project_match'"
-                  (click)="setFilter('project_match')">
-            🤝 Project Matches ({{getCountByType('project_match')}})
-          </button>
-        </div>
-      </div>
+  <!-- Filter by type removed as requested -->
 
-      <!-- Quick Stats -->
-      <div class="stats-section">
-        <h3>Quick Stats</h3>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <span class="stat-number">{{notifications.length}}</span>
-            <span class="stat-label">Total</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-number">{{unreadCount}}</span>
-            <span class="stat-label">Unread</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-number">{{getTodayCount()}}</span>
-            <span class="stat-label">Today</span>
-          </div>
-          
-          <div class="stat-item">
-            <span class="stat-number">{{getThisWeekCount()}}</span>
-            <span class="stat-label">This Week</span>
-          </div>
-        </div>
-      </div>
+  <!-- Quick Stats removed as requested -->
     </div>
   </div>
 </div>

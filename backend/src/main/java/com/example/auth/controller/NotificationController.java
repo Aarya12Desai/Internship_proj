@@ -1,4 +1,9 @@
+
 package com.example.auth.controller;
+
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import java.util.Map;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -23,6 +28,36 @@ import com.example.auth.service.NotificationService;
 @RequestMapping("/api/notifications")
 @CrossOrigin(origins = "http://localhost:4200")
 public class NotificationController {
+
+    /**
+     * Send a notification to a user (used by frontend for connect action)
+     */
+    @PostMapping("/send")
+    public ResponseEntity<?> sendNotificationToUser(@RequestBody Map<String, Object> payload) {
+        try {
+            Long userId = null;
+            if (payload.get("userId") instanceof Integer) {
+                userId = ((Integer) payload.get("userId")).longValue();
+            } else if (payload.get("userId") instanceof Long) {
+                userId = (Long) payload.get("userId");
+            } else if (payload.get("userId") instanceof String) {
+                userId = Long.parseLong((String) payload.get("userId"));
+            }
+            String title = (String) payload.get("title");
+            String message = (String) payload.get("message");
+            String type = (String) payload.get("type");
+            if (userId == null || title == null || message == null || type == null) {
+                return ResponseEntity.badRequest().body(Map.of("error", "Missing required fields"));
+            }
+            Notification notification = notificationService.createNotification(userId, title, message, type);
+            if (notification == null) {
+                return ResponseEntity.status(404).body(Map.of("error", "User not found"));
+            }
+            return ResponseEntity.ok(Map.of("message", "Notification sent successfully"));
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body(Map.of("error", "Failed to send notification", "details", e.getMessage()));
+        }
+    }
     
     private final NotificationService notificationService;
     private final UserRepository userRepository;
