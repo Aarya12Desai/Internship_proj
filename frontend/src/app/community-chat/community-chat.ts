@@ -1,7 +1,8 @@
-import { Component, signal, OnInit, OnDestroy, inject, ElementRef, ViewChild } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, inject, ElementRef, ViewChild, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
-import { CommonModule } from '@angular/common';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
+import { Router } from '@angular/router';
 import { interval, Subscription } from 'rxjs';
 
 interface ChatMessage {
@@ -27,15 +28,23 @@ interface ChatStats {
     <div class="community-chat-container">
       <!-- Header -->
       <div class="chat-header">
-        <h2>🌐 Community Chat</h2>
+        <div class="chat-title">
+          <h2>{{ activeCommunityName() ? '�️ ' + activeCommunityName() : '�🌐 Community Chat' }}</h2>
+          <div *ngIf="!activeCommunityName()" class="no-community-notice">
+            <span>⚠️ No community selected. <a href="/communities">Browse communities</a> to join one!</span>
+          </div>
+        </div>
         <div class="chat-stats">
           <span class="stat-item">📊 {{ chatStats().totalMessages || 0 }} total</span>
           <span class="stat-item">🕒 {{ chatStats().recentMessages || 0 }} in 24h</span>
           <button (click)="refreshMessages()" class="refresh-btn" [disabled]="isLoading()">
             {{ isLoading() ? '⏳' : '🔄' }} Refresh
           </button>
-          <button (click)="createTestMessage()" class="test-btn" [disabled]="isLoading()">
+          <button *ngIf="!activeCommunityName()" (click)="createTestMessage()" class="test-btn" [disabled]="isLoading()">
             🧪 Test Message
+          </button>
+          <button (click)="goBackToCommunities()" class="back-btn">
+            ← Back to Communities
           </button>
         </div>
       </div>
@@ -63,8 +72,11 @@ interface ChatStats {
         <div *ngIf="messages().length === 0 && !isLoading()" class="no-messages">
           <div class="empty-state">
             <div class="empty-icon">💬</div>
-            <h3>No messages yet</h3>
-            <p>Be the first to start the conversation!</p>
+            <h3>{{ activeCommunityName() ? 'No messages yet' : 'No community selected' }}</h3>
+            <p>{{ activeCommunityName() ? 'Be the first to start the conversation!' : 'Join a community to start chatting!' }}</p>
+            <button *ngIf="!activeCommunityName()" (click)="goBackToCommunities()" class="join-community-btn">
+              🏘️ Browse Communities
+            </button>
           </div>
         </div>
 
@@ -116,7 +128,7 @@ interface ChatStats {
       </div>
 
       <!-- Message Input -->
-      <div class="message-input-area">
+      <div class="message-input-area" *ngIf="activeCommunityName()">
         <div class="input-container">
           <textarea 
             [(ngModel)]="newMessage" 
@@ -138,6 +150,16 @@ interface ChatStats {
           </div>
         </div>
       </div>
+
+      <!-- No Community Selected Message -->
+      <div class="no-community-input" *ngIf="!activeCommunityName()">
+        <div class="no-community-message">
+          <p>📝 Select a community to start messaging</p>
+          <button (click)="goBackToCommunities()" class="select-community-btn">
+            🏘️ Browse Communities
+          </button>
+        </div>
+      </div>
     </div>
   `,
   styles: [`
@@ -156,16 +178,36 @@ interface ChatStats {
       border-radius: 15px 15px 0 0;
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
       box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
       margin-bottom: 0;
     }
 
+    .chat-title {
+      flex: 1;
+    }
+
     .chat-header h2 {
-      margin: 0;
+      margin: 0 0 5px 0;
       color: #333;
       font-size: 24px;
       font-weight: 600;
+    }
+
+    .no-community-notice {
+      font-size: 14px;
+      color: #dc3545;
+      margin-top: 5px;
+    }
+
+    .no-community-notice a {
+      color: #667eea;
+      text-decoration: none;
+      font-weight: 500;
+    }
+
+    .no-community-notice a:hover {
+      text-decoration: underline;
     }
 
     .chat-stats {
@@ -223,6 +265,22 @@ interface ChatStats {
     .test-btn:disabled {
       opacity: 0.6;
       cursor: not-allowed;
+    }
+
+    .back-btn {
+      background: linear-gradient(45deg, #6c757d, #495057);
+      color: white;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+
+    .back-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(108, 117, 125, 0.2);
     }
 
     .error-alert, .success-alert {
@@ -323,6 +381,44 @@ interface ChatStats {
     .empty-state p {
       margin: 0;
       color: #888;
+    }
+
+    .join-community-btn,
+    .select-community-btn {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      color: white;
+      border: none;
+      padding: 12px 25px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+      margin-top: 15px;
+    }
+
+    .join-community-btn:hover,
+    .select-community-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    /* No Community Input Area */
+    .no-community-input {
+      background: rgba(255, 255, 255, 0.95);
+      padding: 30px;
+      border-radius: 0 0 15px 15px;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+      text-align: center;
+    }
+
+    .no-community-message {
+      color: #666;
+    }
+
+    .no-community-message p {
+      margin: 0 0 15px 0;
+      font-size: 16px;
+      font-weight: 500;
     }
 
     .message {
@@ -588,6 +684,8 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
   @ViewChild('messageInput') messageInput!: ElementRef;
 
   private http = inject(HttpClient);
+  private router = inject(Router);
+  private platformId = inject(PLATFORM_ID);
   private baseUrl = 'http://localhost:8081/api/community-chat';
   
   // Reactive signals
@@ -599,6 +697,8 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
   successMessage = signal('');
   editingMessageId = signal<number | null>(null);
   editMessageText = signal('');
+  activeCommunityId = signal<number | null>(null);
+  activeCommunityName = signal<string | null>(null);
   
   // Subscriptions
   private refreshSubscription?: Subscription;
@@ -606,6 +706,7 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
 
   ngOnInit() {
     this.initializeUser();
+    this.checkActiveCommunity();
     this.loadMessages();
     this.loadChatStats();
     this.startAutoRefresh();
@@ -616,11 +717,28 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
   }
 
   private initializeUser() {
+    if (!isPlatformBrowser(this.platformId)) {
+      return; // Skip during SSR
+    }
+    
     const userIdStr = localStorage.getItem('user_id');
     this.currentUserId = userIdStr ? parseInt(userIdStr) : null;
     
     if (!this.currentUserId) {
       this.setError('Unable to identify user. Please log in again.');
+    }
+  }
+
+  private checkActiveCommunity() {
+    const communityId = localStorage.getItem('active_community_id');
+    const communityName = localStorage.getItem('active_community_name');
+    
+    if (communityId && communityName) {
+      this.activeCommunityId.set(parseInt(communityId));
+      this.activeCommunityName.set(communityName);
+    } else {
+      this.activeCommunityId.set(null);
+      this.activeCommunityName.set(null);
     }
   }
 
@@ -655,7 +773,14 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
       this.isLoading.set(true);
       this.clearError();
 
-      const response = await this.http.get<ChatMessage[]>(`${this.baseUrl}/messages`, {
+      const communityId = this.activeCommunityId();
+      if (!communityId) {
+        this.setError('No community selected. Please select a community first.');
+        this.messages.set([]);
+        return;
+      }
+
+      const response = await this.http.get<ChatMessage[]>(`${this.baseUrl}/${communityId}/messages`, {
         headers: this.getAuthHeaders()
       }).toPromise();
 
@@ -671,6 +796,11 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
 
   async loadChatStats() {
     try {
+      // Only load stats if no specific community is selected (general stats)
+      if (this.activeCommunityId()) {
+        return; // Skip stats for specific communities
+      }
+
       const response = await this.http.get<ChatStats>(`${this.baseUrl}/stats`, {
         headers: this.getAuthHeaders()
       }).toPromise();
@@ -685,11 +815,18 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
     const messageText = this.newMessage().trim();
     if (!messageText) return;
 
+    // Check if we have an active community for community-specific messaging
+    const communityId = this.activeCommunityId();
+    if (!communityId) {
+      this.setError('No community selected. Please select a community first.');
+      return;
+    }
+
     try {
       this.isLoading.set(true);
       this.clearError();
 
-      const response = await this.http.post<ChatMessage>(`${this.baseUrl}/send`, 
+      const response = await this.http.post<ChatMessage>(`${this.baseUrl}/${communityId}/send`, 
         { message: messageText },
         { headers: this.getAuthHeaders() }
       ).toPromise();
@@ -697,7 +834,6 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
       this.newMessage.set('');
       this.setSuccess('Message sent successfully!');
       await this.loadMessages();
-      await this.loadChatStats();
       this.scrollToBottom();
       
       // Focus back on input
@@ -775,7 +911,6 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
 
   async refreshMessages() {
     await this.loadMessages();
-    await this.loadChatStats();
     this.setSuccess('Messages refreshed!');
   }
 
@@ -790,13 +925,19 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
 
       this.setSuccess('Test message created successfully!');
       await this.loadMessages();
-      await this.loadChatStats();
     } catch (error: any) {
       console.error('Error creating test message:', error);
       this.setError('Failed to create test message. Please try again.');
     } finally {
       this.isLoading.set(false);
     }
+  }
+
+  goBackToCommunities() {
+    // Clear active community selection
+    localStorage.removeItem('active_community_id');
+    localStorage.removeItem('active_community_name');
+    this.router.navigate(['/communities']);
   }
 
   // Utility methods

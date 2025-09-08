@@ -37,8 +37,8 @@ export class CompanyLoginComponent {
       const formData = this.loginForm.value;
       console.log('Attempting company login for:', formData.email);
       
-      // Add role to specify company login
-      this.auth.login(formData.email, formData.password, 'COMPANY').subscribe({
+      // Use the updated login method without role parameter
+      this.auth.login(formData.email, formData.password).subscribe({
         next: (response) => {
           console.log('Company login successful, navigating to dashboard...');
           // Fetch notifications after login

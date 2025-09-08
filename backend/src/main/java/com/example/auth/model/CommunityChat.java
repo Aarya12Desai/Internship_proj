@@ -2,6 +2,8 @@ package com.example.auth.model;
 
 import java.time.LocalDateTime;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -25,6 +27,7 @@ public class CommunityChat {
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "sender_id", nullable = false)
+    @JsonIgnore
     private User sender;
     
     @Column(name = "sender_id", insertable = false, updatable = false)
@@ -32,6 +35,17 @@ public class CommunityChat {
     
     @Column(name = "sender_company_name")
     private String senderCompanyName;
+    
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "community_id", nullable = false)
+    @JsonIgnore
+    private Community community;
+    
+    @Column(name = "community_id", insertable = false, updatable = false)
+    private Long communityId;
+    
+    @Column(name = "community_name")
+    private String communityName;
     
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -55,6 +69,7 @@ public class CommunityChat {
     public void setMessage(String message) { this.message = message; }
     
     public User getSender() { return sender; }
+    @JsonIgnore
     public void setSender(User sender) { this.sender = sender; }
     
     public Long getSenderId() { return senderId; }
@@ -62,6 +77,15 @@ public class CommunityChat {
     
     public String getSenderCompanyName() { return senderCompanyName; }
     public void setSenderCompanyName(String senderCompanyName) { this.senderCompanyName = senderCompanyName; }
+    
+    public Community getCommunity() { return community; }
+    public void setCommunity(Community community) { this.community = community; }
+    
+    public Long getCommunityId() { return communityId; }
+    public void setCommunityId(Long communityId) { this.communityId = communityId; }
+    
+    public String getCommunityName() { return communityName; }
+    public void setCommunityName(String communityName) { this.communityName = communityName; }
     
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }

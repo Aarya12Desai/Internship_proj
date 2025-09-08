@@ -21,10 +21,13 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.example.auth.model.Community;
 import com.example.auth.model.CommunityChat;
 import com.example.auth.model.Role;
 import com.example.auth.model.User;
 import com.example.auth.repository.CommunityChatRepository;
+import com.example.auth.repository.CommunityMembershipRepository;
+import com.example.auth.repository.CommunityRepository;
 import com.example.auth.repository.UserRepository;
 
 @RestController
@@ -38,13 +41,19 @@ public class CommunityChatController {
     @Autowired
     private UserRepository userRepository;
     
-    @GetMapping("/messages")
-    public ResponseEntity<?> getAllMessages(Authentication authentication) {
+    @Autowired
+    private CommunityRepository communityRepository;
+    
+    @Autowired
+    private CommunityMembershipRepository membershipRepository;
+    
+    @GetMapping("/{communityId}/messages")
+    public ResponseEntity<?> getCommunityMessages(@PathVariable Long communityId, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String username = userDetails.getUsername();
             
-            System.out.println("Community Chat - Getting messages for user: " + username);
+            System.out.println("Community Chat - Getting messages for community " + communityId + " and user: " + username);
             
             // Try to find user by username first, then by email
             Optional<User> userOpt = userRepository.findByUsername(username);
@@ -60,12 +69,14 @@ public class CommunityChatController {
             User user = userOpt.get();
             System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
             
-            if (user.getRole() != Role.COMPANY) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only companies can access community chat"));
+            // Check if user is a member of this community
+            if (!membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You must be a member of this community to view messages"));
             }
             
-            List<CommunityChat> messages = communityChatRepository.findTop50ByOrderByCreatedAtDesc();
-            System.out.println("Community Chat - Retrieved " + messages.size() + " messages");
+            List<CommunityChat> messages = communityChatRepository.findTop50ByCommunityIdOrderByCreatedAtDesc(communityId);
+            System.out.println("Community Chat - Retrieved " + messages.size() + " messages for community " + communityId);
             
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
@@ -75,13 +86,13 @@ public class CommunityChatController {
         }
     }
     
-    @PostMapping("/send")
-    public ResponseEntity<?> sendMessage(@RequestBody Map<String, String> request, Authentication authentication) {
+    @PostMapping("/{communityId}/send")
+    public ResponseEntity<?> sendMessage(@PathVariable Long communityId, @RequestBody Map<String, String> request, Authentication authentication) {
         try {
             UserDetails userDetails = (UserDetails) authentication.getPrincipal();
             String username = userDetails.getUsername();
             
-            System.out.println("Community Chat - Sending message for user: " + username);
+            System.out.println("Community Chat - Sending message to community " + communityId + " for user: " + username);
             
             // Try to find user by username first, then by email
             Optional<User> userOpt = userRepository.findByUsername(username);
@@ -97,9 +108,19 @@ public class CommunityChatController {
             User user = userOpt.get();
             System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
             
-            if (user.getRole() != Role.COMPANY) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("error", "Only companies can send messages to community chat"));
+            // Check if user is a member of this community
+            if (!membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "You must be a member of this community to send messages"));
             }
+            
+            // Get community details
+            Optional<Community> communityOpt = communityRepository.findById(communityId);
+            if (communityOpt.isEmpty()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND).body(Map.of("error", "Community not found"));
+            }
+            
+            Community community = communityOpt.get();
             
             String messageText = request.get("message");
             if (messageText == null || messageText.trim().isEmpty()) {
@@ -110,11 +131,14 @@ public class CommunityChatController {
             chatMessage.setMessage(messageText.trim());
             chatMessage.setSender(user);
             chatMessage.setSenderId(user.getId());
-            chatMessage.setSenderCompanyName(user.getCompanyName());
+            chatMessage.setSenderCompanyName(user.getRole() == Role.COMPANY ? user.getCompanyName() : user.getUsername());
+            chatMessage.setCommunity(community);
+            chatMessage.setCommunityId(communityId);
+            chatMessage.setCommunityName(community.getName());
             chatMessage.setCreatedAt(LocalDateTime.now());
             
             CommunityChat savedMessage = communityChatRepository.save(chatMessage);
-            System.out.println("Community Chat - Message saved with ID: " + savedMessage.getId());
+            System.out.println("Community Chat - Message saved with ID: " + savedMessage.getId() + " in community " + community.getName());
             
             return ResponseEntity.ok(savedMessage);
         } catch (Exception e) {
