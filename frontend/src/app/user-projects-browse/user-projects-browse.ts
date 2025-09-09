@@ -647,7 +647,7 @@ export class UserProjectsBrowseComponent implements OnInit {
     this.error.set(null);
 
     // Get all projects (public endpoint)
-    this.http.get<UserProject[]>('http://localhost:8082/api/projects')
+    this.http.get<UserProject[]>('http://localhost:8081/api/projects')
       .subscribe({
         next: (projects) => {
           console.log('Projects loaded:', projects);
@@ -700,7 +700,7 @@ export class UserProjectsBrowseComponent implements OnInit {
         message: `A company is interested in your project "${project.name}" and sent: "${message.trim()}"`,
         type: 'project_match'
       };
-      this.http.post('http://localhost:8082/api/notifications/send', notificationPayload).subscribe({
+      this.http.post('http://localhost:8081/api/notifications/send', notificationPayload).subscribe({
         next: () => {
           alert(`Message sent to ${project.creatorUsername}! They will be notified of your interest in their project.`);
           this.closeModal();

@@ -562,7 +562,8 @@ export class CreateProjectComponent {
         mediaLinks: mediaUrls.join('\n') || undefined
       };
 
-      this.projectService.createProject(payload).subscribe({
+  // Ensure the API call uses port 8081 (not 8082)
+  this.projectService.createProject(payload).subscribe({
         next: (res: any) => {
           this.projectCreated.emit(res);
           
