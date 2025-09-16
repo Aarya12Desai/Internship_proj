@@ -37,11 +37,11 @@ public class CommunityChat {
     private String senderCompanyName;
     
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "community_id", nullable = false)
-    @JsonIgnore
+    @JoinColumn(name = "community_id", insertable = false, updatable = false)
+    @JsonIgnore  
     private Community community;
     
-    @Column(name = "community_id", insertable = false, updatable = false)
+    @Column(name = "community_id")
     private Long communityId;
     
     @Column(name = "community_name")

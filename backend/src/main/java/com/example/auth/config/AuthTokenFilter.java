@@ -47,15 +47,21 @@ public class AuthTokenFilter extends OncePerRequestFilter {
                     String username = jwtUtil.getUserNameFromJwtToken(jwt);
                     System.out.println("AuthTokenFilter - Username from token: " + username);
                     
-                    UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-                    System.out.println("AuthTokenFilter - UserDetails loaded: " + userDetails.getUsername());
-                    
-                    UsernamePasswordAuthenticationToken authentication = 
-                        new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
-                    authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                    
-                    SecurityContextHolder.getContext().setAuthentication(authentication);
-                    System.out.println("AuthTokenFilter - Authentication set successfully");
+                    try {
+                        UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+                        System.out.println("AuthTokenFilter - UserDetails loaded: " + userDetails.getUsername());
+                        
+                        UsernamePasswordAuthenticationToken authentication = 
+                            new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
+                        authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+                        
+                        SecurityContextHolder.getContext().setAuthentication(authentication);
+                        System.out.println("AuthTokenFilter - Authentication set successfully");
+                    } catch (Exception userEx) {
+                        System.out.println("AuthTokenFilter - User not found or invalid, continuing as anonymous: " + userEx.getMessage());
+                        // Don't set authentication, let it continue as anonymous
+                        // This allows endpoints with permitAll() to work even with invalid tokens
+                    }
                 }
             } else {
                 System.out.println("AuthTokenFilter - No JWT token found in request");

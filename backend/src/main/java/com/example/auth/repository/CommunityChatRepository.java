@@ -13,7 +13,7 @@ import com.example.auth.model.CommunityChat;
 @Repository
 public interface CommunityChatRepository extends JpaRepository<CommunityChat, Long> {
     
-    @Query("SELECT cc FROM CommunityChat cc WHERE cc.communityId = :communityId ORDER BY cc.createdAt DESC")
+    @Query(value = "SELECT * FROM community_chat WHERE community_id = :communityId ORDER BY created_at DESC", nativeQuery = true)
     List<CommunityChat> findByCommunityIdOrderByCreatedAtDesc(@Param("communityId") Long communityId);
     
     @Query("SELECT cc FROM CommunityChat cc ORDER BY cc.createdAt DESC")
@@ -28,7 +28,7 @@ public interface CommunityChatRepository extends JpaRepository<CommunityChat, Lo
     @Query("SELECT cc FROM CommunityChat cc ORDER BY cc.createdAt DESC")
     List<CommunityChat> findTop50ByOrderByCreatedAtDesc();
     
-    @Query("SELECT cc FROM CommunityChat cc WHERE cc.communityId = :communityId ORDER BY cc.createdAt DESC LIMIT 50")
+    @Query(value = "SELECT * FROM community_chat WHERE community_id = :communityId ORDER BY created_at DESC LIMIT 50", nativeQuery = true)
     List<CommunityChat> findTop50ByCommunityIdOrderByCreatedAtDesc(@Param("communityId") Long communityId);
     
     @Query("SELECT COUNT(cc) FROM CommunityChat cc WHERE cc.createdAt >= :since")

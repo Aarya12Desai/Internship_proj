@@ -14,9 +14,13 @@ import { ProjectFormComponent } from '../components/project-form.component';
       <div class="ai-matching-form-card">
         <div class="header">
           <h2>AI Project Matching</h2>
-          <p>Find matching projects using AI (no project will be created)</p>
+          <p>Describe your project and find similar projects using AI-powered matching based on description similarity</p>
         </div>
         <app-project-form (formSubmit)="onProjectFormSubmit($event)"></app-project-form>
+        <div *ngIf="loading" class="loading-indicator">
+          <div class="spinner"></div>
+          <p>Finding AI matches... Please wait</p>
+        </div>
         <div *ngIf="error" class="error-message">{{ error }}</div>
         <div *ngIf="matches && matches.length > 0" class="matches-list">
           <h3>Matched Projects ({{ matches.length }} found)</h3>
@@ -38,8 +42,8 @@ import { ProjectFormComponent } from '../components/project-form.component';
         </div>
         <div *ngIf="matches && matches.length === 0 && !loading" class="no-matches">
           <h4>No matching projects found</h4>
-          <p>No projects in the database match your criteria with sufficient similarity (≥50%).</p>
-          <p>Try adjusting your domain, technologies, or description to find more matches.</p>
+          <p>No projects in the database match your description with sufficient similarity (≥50%).</p>
+          <p>Try using different keywords or describing your project in more detail.</p>
         </div>
       </div>
     </div>
@@ -52,6 +56,9 @@ import { ProjectFormComponent } from '../components/project-form.component';
     .form-actions { display: flex; justify-content: flex-end; gap: 10px; }
     .btn-primary { background: #185a9d; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
     .btn-primary:disabled { background: #b0b0b0; cursor: not-allowed; }
+    .loading-indicator { text-align: center; margin: 20px 0; padding: 20px; background: #f0f8ff; border: 1px solid #cce7ff; border-radius: 8px; }
+    .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #185a9d; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 10px; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .error-message { color: #d32f2f; margin-top: 10px; text-align: center; }
     .matches-list { margin-top: 30px; }
     .match-cards { display: flex; flex-direction: column; gap: 15px; }
@@ -92,22 +99,28 @@ export class AiMatchingComponent {
       this.error = 'Please log in to use AI matching';
       return;
     }
+    
+    console.log('Starting AI matching with payload:', form);
     this.loading = true;
     this.error = null;
     this.matches = [];
+    
     const headers = new HttpHeaders({
       'Authorization': `Bearer ${token}`,
       'Content-Type': 'application/json'
     });
     const payload = {
-      name: form.name,
-      description: form.description,
-      technologiesUsed: form.technologiesUsed,
-      domain: form.domain
+      description: form.description
     };
-    this.http.post<any[]>('http://localhost:8081/api/ai-matching', payload, { headers })
+    
+    // Add timeout to prevent getting stuck
+    this.http.post<any[]>('http://localhost:8081/api/ai-matching', payload, { 
+      headers,
+      timeout: 30000 // 30 second timeout
+    })
       .subscribe({
         next: (response) => {
+          console.log('AI matching response:', response);
           this.matches = response || [];
           this.loading = false;
           if (this.matches.length > 0) {
@@ -120,7 +133,8 @@ export class AiMatchingComponent {
           }
         },
         error: (err) => {
-          this.error = err.error?.message || 'Failed to find matches. Please try again.';
+          console.error('AI matching error:', err);
+          this.error = err.error?.message || err.message || 'Failed to find matches. Please try again.';
           this.loading = false;
         }
       });

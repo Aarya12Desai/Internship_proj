@@ -43,11 +43,34 @@ public class CommunityController {
     private UserRepository userRepository;
     
     @GetMapping("/public")
-    public ResponseEntity<?> getPublicCommunities() {
+    public ResponseEntity<?> getPublicCommunities(Authentication authentication) {
         try {
             List<Community> communities = communityRepository.findByIsPublicTrue();
+            Long currentUserId = null;
             
-            // Add member count to each community
+            // Get current user ID if authenticated
+            if (authentication != null && authentication.isAuthenticated() && 
+                !"anonymousUser".equals(authentication.getPrincipal())) {
+                try {
+                    UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                    String username = userDetails.getUsername();
+                    
+                    Optional<User> userOpt = userRepository.findByUsername(username);
+                    if (userOpt.isEmpty()) {
+                        userOpt = userRepository.findByEmail(username);
+                    }
+                    
+                    if (userOpt.isPresent()) {
+                        currentUserId = userOpt.get().getId();
+                    }
+                } catch (Exception e) {
+                    // If authentication fails, just continue without user context
+                    System.out.println("Could not get user from authentication, continuing without join status");
+                }
+            }
+            
+            // Add member count and join status to each community
+            final Long userId = currentUserId;
             List<Map<String, Object>> communitiesWithStats = communities.stream().map(community -> {
                 Map<String, Object> communityData = new HashMap<>();
                 communityData.put("id", community.getId());
@@ -58,6 +81,15 @@ public class CommunityController {
                 communityData.put("isPublic", community.isPublic());
                 communityData.put("createdAt", community.getCreatedAt());
                 communityData.put("memberCount", communityRepository.countActiveMembers(community.getId()));
+                
+                // Add join status if user is authenticated
+                if (userId != null) {
+                    boolean isJoined = membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(userId, community.getId());
+                    communityData.put("isJoined", isJoined);
+                } else {
+                    communityData.put("isJoined", false);
+                }
+                
                 return communityData;
             }).toList();
             

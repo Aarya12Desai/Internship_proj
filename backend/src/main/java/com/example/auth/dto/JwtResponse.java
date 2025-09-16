@@ -11,6 +11,8 @@ public class JwtResponse {
     private String companyWebsite;
     private String companyContactName;
     private String companyContactPhone;
+    private Long companyCommunityId;
+    private String companyCommunityName;
     
     public JwtResponse(String accessToken, Long id, String username, String email, String role) {
         this.token = accessToken;
@@ -31,6 +33,22 @@ public class JwtResponse {
         this.companyWebsite = companyWebsite;
         this.companyContactName = companyContactName;
         this.companyContactPhone = companyContactPhone;
+    }
+    
+    public JwtResponse(String accessToken, Long id, String username, String email, String role,
+                      String companyName, String companyWebsite, String companyContactName, String companyContactPhone,
+                      Long companyCommunityId, String companyCommunityName) {
+        this.token = accessToken;
+        this.id = id;
+        this.username = username;
+        this.email = email;
+        this.role = role;
+        this.companyName = companyName;
+        this.companyWebsite = companyWebsite;
+        this.companyContactName = companyContactName;
+        this.companyContactPhone = companyContactPhone;
+        this.companyCommunityId = companyCommunityId;
+        this.companyCommunityName = companyCommunityName;
     }
     
     // Getters and setters
@@ -112,5 +130,21 @@ public class JwtResponse {
     
     public void setCompanyContactPhone(String companyContactPhone) {
         this.companyContactPhone = companyContactPhone;
+    }
+    
+    public Long getCompanyCommunityId() {
+        return companyCommunityId;
+    }
+    
+    public void setCompanyCommunityId(Long companyCommunityId) {
+        this.companyCommunityId = companyCommunityId;
+    }
+    
+    public String getCompanyCommunityName() {
+        return companyCommunityName;
+    }
+    
+    public void setCompanyCommunityName(String companyCommunityName) {
+        this.companyCommunityName = companyCommunityName;
     }
 }

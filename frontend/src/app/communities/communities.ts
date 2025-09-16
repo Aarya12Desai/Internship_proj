@@ -239,12 +239,12 @@ interface CreateCommunityRequest {
         </div>
 
         <div class="my-communities-list">
-          <div *ngFor="let membership of myCommunities(); trackBy: trackMembership" 
-               class="membership-card">
+    <div *ngFor="let membership of myCommunities(); trackBy: trackMembership" 
+      class="membership-card">
             <div class="membership-header">
               <h3>{{ membership.communityName }}</h3>
-              <span class="role-badge" [class]="membership.role.toLowerCase()">
-                {{ formatRole(membership.role) }}
+              <span class="role-badge" [class]="membership.role ? membership.role.toLowerCase() : 'unknown'">
+                {{ formatRole(membership.role || 'MEMBER') }}
               </span>
             </div>
 
@@ -254,7 +254,7 @@ interface CreateCommunityRequest {
 
             <div class="membership-actions">
               <button 
-                (click)="openCommunityChat(membership.communityId, membership.communityName)"
+                (click)="openCommunityChat(membership.communityId !== undefined ? membership.communityId : membership.id, membership.communityName)"
                 class="chat-btn">
                 💬 Open Chat
               </button>
@@ -1319,10 +1319,19 @@ export class CommunitiesComponent implements OnInit {
 
   openCommunityChat(communityId: number, communityName: string) {
     // Navigate to community-specific chat
-    // For now, we'll store the community info and navigate to the existing chat
+    // Accept both number and string, and try to coerce to number
+    let id = communityId;
+    if (typeof id !== 'number') {
+      id = Number(id);
+    }
+    if (!id || isNaN(id)) {
+      console.error('openCommunityChat: invalid id', communityId, communityName);
+      this.setError('Invalid community ID. Cannot open chat.');
+      return;
+    }
     if (isPlatformBrowser(this.platformId)) {
-      localStorage.setItem('active_community_id', communityId.toString());
-      localStorage.setItem('active_community_name', communityName);
+      localStorage.setItem('active_community_id', String(id));
+      localStorage.setItem('active_community_name', communityName || '');
     }
     this.router.navigate(['/community-chat']);
   }

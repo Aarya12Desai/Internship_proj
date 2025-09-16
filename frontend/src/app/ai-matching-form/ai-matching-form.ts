@@ -12,17 +12,13 @@ import { Auth } from '../services/auth';
     <div class="ai-matching-form-container">
       <div class="ai-matching-form-card">
         <div class="header">
-          <h2>AI User Matching</h2>
-          <p>Find users with similar interests using AI</p>
+          <h2>AI Project Matching</h2>
+          <p>Find similar projects using AI-powered matching based on description similarity</p>
         </div>
         <form (ngSubmit)="submitForm()" #aiForm="ngForm">
           <div class="form-group">
-            <label for="country">Country *</label>
-            <input type="text" id="country" name="country" [(ngModel)]="form.country" placeholder="Enter your country" required />
-          </div>
-          <div class="form-group">
-            <label for="description">Description *</label>
-            <textarea id="description" name="description" [(ngModel)]="form.description" rows="4" placeholder="Describe your interests, skills, or project goals" required></textarea>
+            <label for="description">Project Description *</label>
+            <textarea id="description" name="description" [(ngModel)]="form.description" rows="6" placeholder="Describe your project in detail - include the problem it solves, technologies used, target audience, and what makes it unique. This will be used to find matching projects." required></textarea>
           </div>
           <div class="form-actions">
             <button type="submit" class="btn-primary" [disabled]="!aiForm.valid || loading()">
@@ -32,16 +28,25 @@ import { Auth } from '../services/auth';
         </form>
         <div *ngIf="error()" class="error-message">{{ error() }}</div>
         <div *ngIf="matches && matches.length > 0" class="matches-list">
-          <h3>Matched Users</h3>
+          <h3>Matched Projects ({{ matches.length }} found)</h3>
           <ul>
             <li *ngFor="let match of matches">
-              <strong>{{ match.name }}</strong> ({{ match.country }})<br />
-              <span>{{ match.description }}</span>
+              <div class="match-header">
+                <strong>{{ match.title }}</strong>
+                <span class="match-score">{{ match.matchScore }}% match</span>
+              </div>
+              <div class="match-details">
+                <p><strong>Creator:</strong> {{ match.creator || 'Unknown' }}</p>
+                <p><strong>Domain:</strong> {{ match.domain }}</p>
+                <p><strong>Technologies:</strong> {{ match.technologies }}</p>
+                <p><strong>Description:</strong> {{ match.description }}</p>
+              </div>
             </li>
           </ul>
         </div>
         <div *ngIf="matches && matches.length === 0 && !loading()" class="no-matches">
-          No matches found.
+          <h4>No matching projects found</h4>
+          <p>No projects in the database match your description with sufficient similarity (≥50%). Try using different keywords or describing your project in more detail.</p>
         </div>
       </div>
     </div>
@@ -99,20 +104,58 @@ import { Auth } from '../services/auth';
     }
     .matches-list li {
       background: #f5f5f5;
-      border-radius: 6px;
-      padding: 12px 16px;
+      border-radius: 8px;
+      padding: 16px;
+      margin-bottom: 15px;
+      border-left: 4px solid #185a9d;
+    }
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 10px;
+    }
+    .match-header strong {
+      font-size: 1.1rem;
+      color: #333;
+    }
+    .match-score {
+      background: #4caf50;
+      color: white;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: bold;
+    }
+    .match-details p {
+      margin: 5px 0;
+      color: #555;
+      font-size: 0.95rem;
+    }
+    .match-details strong {
+      color: #333;
     }
     .no-matches {
       margin-top: 30px;
       text-align: center;
       color: #888;
+      background: #f9f9f9;
+      padding: 20px;
+      border-radius: 8px;
+      border: 1px dashed #ddd;
+    }
+    .no-matches h4 {
+      color: #666;
+      margin-bottom: 10px;
+    }
+    .no-matches p {
+      margin: 5px 0;
+      font-size: 0.95rem;
     }
   `]
 })
 export class AiMatchingFormComponent {
   form = {
-    country: '',
     description: ''
   };
   matches: any[] = [];
@@ -136,7 +179,6 @@ export class AiMatchingFormComponent {
       'Content-Type': 'application/json'
     });
     const payload = {
-      country: this.form.country.trim(),
       description: this.form.description.trim()
     };
     this.http.post<any[]>('http://localhost:8081/api/ai-matching', payload, { headers })

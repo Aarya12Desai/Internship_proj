@@ -70,19 +70,72 @@ public class CommunityChatController {
             System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
             
             // Allow all users to view messages in the global chat (communityId == 0)
-            if (communityId != 0 && !membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "You must be a member of this community to view messages"));
+            if (communityId != 0) {
+                boolean isMember = membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId);
+                Optional<Community> communityOpt = communityRepository.findById(communityId);
+                if (user.getRole() == Role.COMPANY && communityOpt.isPresent()) {
+                    Community community = communityOpt.get();
+                    if (community.getCompanyId() != null && community.getCompanyId().equals(user.getId())) {
+                        // Upsert membership: find or create and activate
+                        Optional<com.example.auth.model.CommunityMembership> existingMembershipOpt = membershipRepository.findByUserIdAndCommunityId(user.getId(), community.getId());
+                        com.example.auth.model.CommunityMembership membership;
+                        if (existingMembershipOpt.isPresent()) {
+                            membership = existingMembershipOpt.get();
+                            membership.setActive(true);
+                            membership.setRole(com.example.auth.model.MembershipRole.ADMIN);
+                            System.out.println("Community Chat - Reactivated existing membership for company owner: " + user.getUsername());
+                        } else {
+                            membership = new com.example.auth.model.CommunityMembership();
+                            membership.setUser(user);
+                            membership.setUserId(user.getId());
+                            membership.setUsername(user.getUsername());
+                            membership.setCommunity(community);
+                            membership.setCommunityId(community.getId());
+                            membership.setRole(com.example.auth.model.MembershipRole.ADMIN);
+                            membership.setActive(true);
+                            System.out.println("Community Chat - Created new membership for company owner: " + user.getUsername());
+                        }
+                        membershipRepository.save(membership);
+                        // After upsert, always allow company owner to fetch messages
+                        List<CommunityChat> messages = communityChatRepository.findTop50ByCommunityIdOrderByCreatedAtDesc(communityId);
+                        System.out.println("Community Chat - Retrieved " + messages.size() + " messages for community " + communityId);
+                        return ResponseEntity.ok(messages);
+                    }
+                }
+                if (!isMember) {
+                    System.out.println("Community Chat - Access denied for user: " + user.getUsername() + " in community: " + communityId);
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "You must be a member of this community to view messages"));
+                }
             }
             
             List<CommunityChat> messages;
             if (communityId == 0) {
                 // For global chat, show all messages (or you can limit to a higher number if needed)
                 messages = communityChatRepository.findByCommunityIdOrderByCreatedAtDesc(0L);
+                System.out.println("Community Chat - Using global chat query for communityId 0");
             } else {
                 messages = communityChatRepository.findTop50ByCommunityIdOrderByCreatedAtDesc(communityId);
+                System.out.println("Community Chat - Using regular chat query for communityId " + communityId);
             }
             System.out.println("Community Chat - Retrieved " + messages.size() + " messages for community " + communityId);
+            
+            // Debug: Let's also check the total count in the database for this community
+            try {
+                List<CommunityChat> allMessages = communityChatRepository.findAll();
+                long communityMessages = allMessages.stream().filter(m -> m.getCommunityId() != null && m.getCommunityId().equals(communityId)).count();
+                System.out.println("Community Chat - Debug: Total messages in DB: " + allMessages.size() + ", Messages for community " + communityId + ": " + communityMessages);
+                
+                // Print some message details
+                for (CommunityChat msg : allMessages) {
+                    if (msg.getCommunityId() != null && msg.getCommunityId().equals(communityId)) {
+                        System.out.println("Community Chat - Debug message: ID=" + msg.getId() + ", communityId=" + msg.getCommunityId() + ", message=" + msg.getMessage() + ", sender=" + msg.getSenderCompanyName());
+                    }
+                }
+            } catch (Exception debugEx) {
+                System.err.println("Community Chat - Debug error: " + debugEx.getMessage());
+            }
+            
             return ResponseEntity.ok(messages);
         } catch (Exception e) {
             System.err.println("Community Chat - Error fetching messages: " + e.getMessage());
@@ -114,9 +167,37 @@ public class CommunityChatController {
             System.out.println("Community Chat - Found user: " + user.getUsername() + ", Role: " + user.getRole());
             
             // Allow all users to send messages in the global chat (communityId == 0)
-            if (communityId != 0 && !membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId)) {
-                return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "You must be a member of this community to send messages"));
+            if (communityId != 0) {
+                boolean isMember = membershipRepository.existsByUserIdAndCommunityIdAndIsActiveTrue(user.getId(), communityId);
+                Optional<Community> communityOpt = communityRepository.findById(communityId);
+                if (user.getRole() == Role.COMPANY && communityOpt.isPresent()) {
+                    Community community = communityOpt.get();
+                    if (community.getCompanyId() != null && community.getCompanyId().equals(user.getId())) {
+                        // Upsert membership: find or create and activate
+                        Optional<com.example.auth.model.CommunityMembership> existingMembershipOpt = membershipRepository.findByUserIdAndCommunityId(user.getId(), community.getId());
+                        com.example.auth.model.CommunityMembership membership;
+                        if (existingMembershipOpt.isPresent()) {
+                            membership = existingMembershipOpt.get();
+                            membership.setActive(true);
+                            membership.setRole(com.example.auth.model.MembershipRole.ADMIN);
+                        } else {
+                            membership = new com.example.auth.model.CommunityMembership();
+                            membership.setUser(user);
+                            membership.setUserId(user.getId());
+                            membership.setUsername(user.getUsername());
+                            membership.setCommunity(community);
+                            membership.setCommunityId(community.getId());
+                            membership.setRole(com.example.auth.model.MembershipRole.ADMIN);
+                            membership.setActive(true);
+                        }
+                        membershipRepository.save(membership);
+                        isMember = true;
+                    }
+                }
+                if (!isMember) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("error", "You must be a member of this community to send messages"));
+                }
             }
             
             String messageText = request.get("message");

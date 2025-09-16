@@ -1,4 +1,4 @@
-import { Component, signal, OnInit, OnDestroy, inject, ElementRef, ViewChild, PLATFORM_ID } from '@angular/core';
+import { Component, signal, OnInit, OnDestroy, AfterViewInit, inject, ElementRef, ViewChild, PLATFORM_ID } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
@@ -59,7 +59,18 @@ interface ChatStats {
           <div class="empty-state">
             <div class="empty-icon">💬</div>
             <h3>No messages yet</h3>
-            <p>Be the first to start the conversation!</p>
+            <p *ngIf="activeCommunityName(); else noCommunityCases">Be the first to start the conversation!</p>
+            <ng-template #noCommunityCases>
+              <p *ngIf="getUserRole() === 'COMPANY'; else regularUserCase">
+                Your company community will appear here once it's set up.
+              </p>
+              <ng-template #regularUserCase>
+                <p>Please select a community to view messages.</p>
+                <button (click)="goToCommunities()" class="select-community-btn">
+                  Browse Communities
+                </button>
+              </ng-template>
+            </ng-template>
             <!-- Removed browse communities button for company -->
           </div>
         </div>
@@ -655,7 +666,7 @@ interface ChatStats {
     }
   `]
 })
-export class CommunityChatComponent implements OnInit, OnDestroy {
+export class CommunityChatComponent implements OnInit, OnDestroy, AfterViewInit {
   @ViewChild('messagesContainer') messagesContainer!: ElementRef;
   @ViewChild('messageInput') messageInput!: ElementRef;
 
@@ -681,15 +692,62 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
   private currentUserId: number | null = null;
 
   ngOnInit() {
+    console.log('ngOnInit called');
+    
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('Not in browser environment, skipping initialization');
+      return;
+    }
+
     this.initializeUser();
     this.checkActiveCommunity();
-    this.loadMessages();
-    this.loadChatStats();
+    
+    // Debug logging
+    console.log('ngOnInit - activeCommunityId:', this.activeCommunityId());
+    console.log('ngOnInit - activeCommunityName:', this.activeCommunityName());
+    
+    // Only attempt to load messages if we have a community or if it's a company user looking for their community
+    const hasActiveCommunity = this.activeCommunityId() !== null;
+    const isCompanyLookingForCommunity = localStorage.getItem('find_company_community') === 'true';
+    
+    console.log('ngOnInit - hasActiveCommunity:', hasActiveCommunity, 'isCompanyLookingForCommunity:', isCompanyLookingForCommunity);
+    
+    if (hasActiveCommunity || isCompanyLookingForCommunity) {
+      this.loadMessages();
+    } else {
+      // Regular user without a selected community - show appropriate message
+      const userRole = localStorage.getItem('user_role');
+      console.log('ngOnInit - No community found, userRole:', userRole);
+      if (userRole === 'COMPANY') {
+        this.setError('No company community found. Please contact support.');
+      } else {
+        this.setError('Please select a community to view messages. Browse communities to join one.');
+      }
+    }
+    
     this.startAutoRefresh();
   }
 
   ngOnDestroy() {
     this.stopAutoRefresh();
+  }
+
+  ngAfterViewInit() {
+    // Give extra time for localStorage to be properly set by the navigation
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        console.log('ngAfterViewInit - Re-checking community after delay');
+        this.checkActiveCommunity();
+        
+        const hasActiveCommunity = this.activeCommunityId() !== null;
+        console.log('ngAfterViewInit - hasActiveCommunity after delay:', hasActiveCommunity);
+        
+        if (hasActiveCommunity && this.messages().length === 0 && !this.errorMessage()) {
+          console.log('ngAfterViewInit - Loading messages after finding community');
+          this.loadMessages();
+        }
+      }, 100); // Small delay to ensure localStorage is ready
+    }
   }
 
   private initializeUser() {
@@ -706,15 +764,70 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
   }
 
   private checkActiveCommunity() {
+    console.log('checkActiveCommunity called');
+    
+    if (!isPlatformBrowser(this.platformId)) {
+      console.log('Not in browser environment, skipping localStorage access');
+      return;
+    }
+
     const communityId = localStorage.getItem('active_community_id');
     const communityName = localStorage.getItem('active_community_name');
+    
+    console.log('checkActiveCommunity - communityId:', communityId, 'communityName:', communityName);
     
     if (communityId && communityName) {
       this.activeCommunityId.set(parseInt(communityId));
       this.activeCommunityName.set(communityName);
+      console.log('Set active community:', parseInt(communityId), communityName);
     } else {
       this.activeCommunityId.set(null);
       this.activeCommunityName.set(null);
+      console.log('No active community found in localStorage');
+    }
+  }
+
+  private async findCompanyCommunity() {
+    try {
+      // Check if user is a company user first
+      const userRole = localStorage.getItem('user_role');
+      if (userRole !== 'COMPANY') {
+        this.setError('Company community access is only available for company users. Please browse public communities instead.');
+        return;
+      }
+
+      // Try to get company community from backend
+      const response = await this.http.get<any>('http://localhost:8081/api/communities/company-community', {
+        headers: this.getAuthHeaders()
+      }).toPromise();
+
+      if (response && response.id) {
+        // Store the community info
+        localStorage.setItem('company_community_id', response.id.toString());
+        localStorage.setItem('company_community_name', response.name || 'Company Community');
+        localStorage.setItem('active_community_id', response.id.toString());
+        localStorage.setItem('active_community_name', response.name || 'Company Community');
+        
+        // Update signals
+        this.activeCommunityId.set(response.id);
+        this.activeCommunityName.set(response.name || 'Company Community');
+        
+        // Clear the flag
+        localStorage.removeItem('find_company_community');
+        
+        console.log('Found company community:', response);
+      } else {
+        this.setError('Your company does not have a community set up yet.');
+      }
+    } catch (error: any) {
+      console.error('Error finding company community:', error);
+      if (error.status === 403) {
+        this.setError('Company community access is only available for company users. Please browse public communities instead.');
+      } else if (error.status === 404) {
+        this.setError('Your company does not have a community set up yet.');
+      } else {
+        this.setError('Unable to find your company community. Please contact support.');
+      }
     }
   }
 
@@ -722,7 +835,7 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
     // Refresh messages every 30 seconds
     this.refreshSubscription = interval(30000).subscribe(() => {
       this.loadMessages();
-      this.loadChatStats();
+      // No global chat stats refresh
     });
   }
 
@@ -751,14 +864,37 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
 
       let communityId = this.activeCommunityId();
       if (!communityId) {
-        communityId = 0; // Use 0 as the default/global community
+        // Check if we need to find company community
+        const findCompanyCommunity = localStorage.getItem('find_company_community');
+        if (findCompanyCommunity === 'true') {
+          await this.findCompanyCommunity();
+          communityId = this.activeCommunityId();
+        }
+        
+        if (!communityId) {
+          console.log('No community ID available, cannot load messages');
+          
+          // Check user role to provide appropriate message
+          const userRole = localStorage.getItem('user_role');
+          if (userRole === 'COMPANY') {
+            this.setError('No community available. Please ensure your company has a community set up.');
+          } else {
+            this.setError('Please select a community to view messages. Browse communities to join one.');
+          }
+          return;
+        }
       }
+
+      console.log(`Loading messages for community ${communityId}...`);
 
       const response = await this.http.get<ChatMessage[]>(`${this.baseUrl}/${communityId}/messages`, {
         headers: this.getAuthHeaders()
       }).toPromise();
 
-      this.messages.set(response || []);
+      console.log(`Loaded ${(response || []).length} messages:`, response);
+
+      // Reverse messages so oldest is first, newest is last
+      this.messages.set((response || []).reverse());
       this.scrollToBottom();
     } catch (error: any) {
       console.error('Error loading messages:', error);
@@ -769,30 +905,33 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
   }
 
   async loadChatStats() {
-    try {
-      // Only load stats if no specific community is selected (general stats)
-      if (this.activeCommunityId()) {
-        return; // Skip stats for specific communities
-      }
-
-      const response = await this.http.get<ChatStats>(`${this.baseUrl}/stats`, {
-        headers: this.getAuthHeaders()
-      }).toPromise();
-
-      this.chatStats.set(response || { totalMessages: 0, recentMessages: 0 });
-    } catch (error: any) {
-      console.error('Error loading chat stats:', error);
-    }
+  // Removed global chat stats call to avoid 403 error
+  return;
   }
 
   async sendMessage() {
     const messageText = this.newMessage().trim();
     if (!messageText) return;
 
-    // For company, allow sending even if no community is selected
     let communityId = this.activeCommunityId();
     if (!communityId) {
-      communityId = 0; // Use 0 as the default/global community
+      // Check if we need to find company community
+      const findCompanyCommunity = localStorage.getItem('find_company_community');
+      if (findCompanyCommunity === 'true') {
+        await this.findCompanyCommunity();
+        communityId = this.activeCommunityId();
+      }
+      
+      if (!communityId) {
+        // Check user role to provide appropriate message
+        const userRole = localStorage.getItem('user_role');
+        if (userRole === 'COMPANY') {
+          this.setError('No community available. Please ensure your company has a community set up.');
+        } else {
+          this.setError('Please select a community to send messages. Browse communities to join one.');
+        }
+        return;
+      }
     }
 
     try {
@@ -804,10 +943,22 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
         { headers: this.getAuthHeaders() }
       ).toPromise();
 
+      console.log('Message sent successfully:', response);
+      
+      if (response) {
+        // Add the new message to the current messages list immediately
+        const currentMessages = this.messages();
+        this.messages.set([...currentMessages, response]);
+        this.scrollToBottom();
+      }
+
       this.newMessage.set('');
       this.setSuccess('Message sent successfully!');
-      await this.loadMessages();
-      this.scrollToBottom();
+      
+      // Refresh messages to ensure we have the latest state
+      setTimeout(() => {
+        this.loadMessages();
+      }, 500);
       
       // Focus back on input
       setTimeout(() => {
@@ -911,6 +1062,14 @@ export class CommunityChatComponent implements OnInit, OnDestroy {
     localStorage.removeItem('active_community_id');
     localStorage.removeItem('active_community_name');
     this.router.navigate(['/communities']);
+  }
+
+  goToCommunities() {
+    this.router.navigate(['/communities']);
+  }
+
+  getUserRole(): string | null {
+    return localStorage.getItem('user_role');
   }
 
   // Utility methods

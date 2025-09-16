@@ -17,6 +17,8 @@ public interface CommunityRepository extends JpaRepository<Community, Long> {
     
     List<Community> findByCompanyId(Long companyId);
     
+    Optional<Community> findFirstByCompanyId(Long companyId);
+    
     Optional<Community> findByIdAndIsPublicTrue(Long id);
     
     @Query("SELECT c FROM Community c WHERE c.isPublic = true AND " +

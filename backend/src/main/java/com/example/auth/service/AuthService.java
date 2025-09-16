@@ -1,5 +1,7 @@
 package com.example.auth.service;
 
+import java.util.Optional;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -149,7 +151,9 @@ public class AuthService {
             user.getCompanyName(),
             user.getCompanyWebsite(),
             user.getCompanyContactName(),
-            user.getCompanyContactPhone()
+            user.getCompanyContactPhone(),
+            savedCommunity.getId(),
+            savedCommunity.getName()
         );
     }
 
@@ -182,17 +186,36 @@ public class AuthService {
         String jwt = jwtUtil.generateJwtToken(userDetails.getUsername());
         
         if (user.getRole() == Role.COMPANY) {
-            return new JwtResponse(
-                jwt,
-                user.getId(),
-                user.getUsername(),
-                user.getEmail(),
-                user.getRole().name(),
-                user.getCompanyName(),
-                user.getCompanyWebsite(),
-                user.getCompanyContactName(),
-                user.getCompanyContactPhone()
-            );
+            // Find the company's community
+            Optional<Community> companyCommunityOpt = communityRepository.findFirstByCompanyId(user.getId());
+            if (companyCommunityOpt.isPresent()) {
+                Community companyCommunity = companyCommunityOpt.get();
+                return new JwtResponse(
+                    jwt,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    user.getCompanyName(),
+                    user.getCompanyWebsite(),
+                    user.getCompanyContactName(),
+                    user.getCompanyContactPhone(),
+                    companyCommunity.getId(),
+                    companyCommunity.getName()
+                );
+            } else {
+                return new JwtResponse(
+                    jwt,
+                    user.getId(),
+                    user.getUsername(),
+                    user.getEmail(),
+                    user.getRole().name(),
+                    user.getCompanyName(),
+                    user.getCompanyWebsite(),
+                    user.getCompanyContactName(),
+                    user.getCompanyContactPhone()
+                );
+            }
         } else {
             return new JwtResponse(
                 jwt,

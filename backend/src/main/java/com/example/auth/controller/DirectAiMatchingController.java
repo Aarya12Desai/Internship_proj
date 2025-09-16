@@ -37,18 +37,20 @@ public class DirectAiMatchingController {
     @PostMapping("/ai-matching")
     public ResponseEntity<?> directAiMatching(@RequestBody Map<String, Object> projectData) {
         try {
+            System.out.println("AI Matching request received: " + projectData);
+            
             // Get current user info if available
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             String currentUsername = auth != null ? auth.getName() : "anonymous";
             
             // Get all projects from database for real matching
             List<Project> allProjects = projectRepository.findAll();
+            System.out.println("Found " + allProjects.size() + " projects in database");
             
             // Extract project details from input
-            String inputName = (String) projectData.get("name");
-            String inputDomain = (String) projectData.get("domain");
-            String inputTechnologies = (String) projectData.get("technologiesUsed");
             String inputDescription = (String) projectData.get("description");
+            
+            System.out.println("Input description: " + inputDescription);
             
             // Find matching projects based on domain and technologies
             List<Map<String, Object>> matches = new ArrayList<>();
@@ -60,14 +62,17 @@ public class DirectAiMatchingController {
                     continue;
                 }
                 
-                // Calculate match score based on similarity
-                double matchScore = calculateMatchScore(
-                    inputDomain, inputTechnologies, inputDescription,
-                    project.getDomain(), project.getTechnologiesUsed(), project.getDescription()
+                // Calculate match score based on description similarity only
+                double matchScore = calculateDescriptionMatchScore(
+                    inputDescription,
+                    project.getDescription()
                 );
                 
-                // Only include if match score is above threshold (50%)
-                if (matchScore >= 50) {
+                System.out.println("Project: " + project.getName() + ", Score: " + matchScore + 
+                    ", Description: " + project.getDescription().substring(0, Math.min(50, project.getDescription().length())) + "...");
+                
+                // Only include if match score is above threshold (2% - very lenient for testing)
+                if (matchScore >= 2) {
                     Map<String, Object> match = new HashMap<>();
                     match.put("id", project.getId());
                     match.put("title", project.getName());
@@ -78,9 +83,6 @@ public class DirectAiMatchingController {
                     match.put("matchScore", (int) matchScore);
                     match.put("createdAt", project.getCreatedAt());
                     matches.add(match);
-                    
-                    // Send notification to both users about the match
-                    sendMatchNotifications(currentUsername, inputName, project, matchScore);
                 }
             }
             
@@ -92,10 +94,12 @@ public class DirectAiMatchingController {
                 matches = matches.subList(0, 10);
             }
             
-            // Only return real matches from database - no fake users
+            System.out.println("Returning " + matches.size() + " matches");
+            
+            // Return real matches from database
             return ResponseEntity.ok(matches);
         } catch (Exception e) {
-            e.printStackTrace();
+            System.err.println("AI matching error: " + e.getMessage());
             return ResponseEntity.badRequest().body(Map.of("error", "AI matching failed: " + e.getMessage()));
         }
     }
@@ -159,48 +163,139 @@ public class DirectAiMatchingController {
         return Math.min(score, 100); // Cap at 100%
     }
     
-    private void sendMatchNotifications(String currentUsername, String inputProjectName, 
-                                      Project matchedProject, double matchScore) {
-        try {
-            // Create notification for the matched project's creator
-            if (matchedProject.getCreatorUsername() != null) {
-                String title = "New Project Match Found!";
-                String message = String.format(
-                    "Your project '%s' has been matched with '%s' (%.0f%% similarity). Creator: %s",
-                    matchedProject.getName(),
-                    inputProjectName != null ? inputProjectName : "Unnamed Project",
-                    matchScore,
-                    currentUsername.equals("anonymous") ? "Anonymous User" : currentUsername
-                );
-                
-                notificationService.createNotificationByUsername(
-                    matchedProject.getCreatorUsername(), 
-                    title, 
-                    message, 
-                    "PROJECT_MATCH"
-                );
-            }
-            
-            // Create notification for the current user (if authenticated)
-            if (!currentUsername.equals("anonymous")) {
-                String title = "Project Match Found!";
-                String message = String.format(
-                    "Found a matching project: '%s' (%.0f%% similarity). Creator: %s",
-                    matchedProject.getName(),
-                    matchScore,
-                    matchedProject.getCreatorUsername() != null ? matchedProject.getCreatorUsername() : "Unknown"
-                );
-                
-                notificationService.createNotificationByUsername(
-                    currentUsername, 
-                    title, 
-                    message, 
-                    "PROJECT_MATCH"
-                );
-            }
-            
-        } catch (Exception e) {
-            System.err.println("Error sending match notifications: " + e.getMessage());
+    private double calculateDescriptionMatchScore(String inputDescription, String projectDescription) {
+        if (inputDescription == null || projectDescription == null) {
+            return 0.0;
         }
+        
+        // Convert to lowercase for comparison
+        String inputDesc = inputDescription.toLowerCase();
+        String projectDesc = projectDescription.toLowerCase();
+        
+        // Split into words for analysis
+        String[] inputWords = inputDesc.split("\\s+");
+        String[] projectWords = projectDesc.split("\\s+");
+        
+        // Calculate word overlap score (70% weight)
+        int commonWords = 0;
+        for (String inputWord : inputWords) {
+            if (inputWord.length() > 2) { // Consider words with 3+ characters (was 4+)
+                for (String projectWord : projectWords) {
+                    // Exact match
+                    if (inputWord.equals(projectWord)) {
+                        commonWords++;
+                        break;
+                    }
+                    // Partial match (contains or is contained)
+                    else if (inputWord.length() > 4 && projectWord.length() > 4) {
+                        if (inputWord.contains(projectWord) || projectWord.contains(inputWord)) {
+                            commonWords++;
+                            break;
+                        }
+                    }
+                    // Fuzzy match for similar words
+                    else if (inputWord.length() > 3 && projectWord.length() > 3) {
+                        if (calculateLevenshteinSimilarity(inputWord, projectWord) > 0.75) {
+                            commonWords++;
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+        
+        double wordOverlapScore = 0.0;
+        if (commonWords > 0) {
+            wordOverlapScore = (70.0 * commonWords) / Math.max(inputWords.length, projectWords.length);
+        }
+        
+        // Calculate phrase/substring similarity (30% weight)
+        double phraseScore = 0.0;
+        
+        // Check for common phrases (3+ word sequences)
+        if (inputDesc.length() > 10 && projectDesc.length() > 10) {
+            if (projectDesc.contains(inputDesc.substring(0, Math.min(inputDesc.length(), 20))) ||
+                inputDesc.contains(projectDesc.substring(0, Math.min(projectDesc.length(), 20)))) {
+                phraseScore = 30.0;
+            } else {
+                // Check for partial phrase matches
+                String[] inputPhrases = inputDesc.split("[.!?]");
+                String[] projectPhrases = projectDesc.split("[.!?]");
+                
+                int commonPhrases = 0;
+                for (String inputPhrase : inputPhrases) {
+                    if (inputPhrase.trim().length() > 10) {
+                        for (String projectPhrase : projectPhrases) {
+                            if (projectPhrase.trim().length() > 10) {
+                                // Check for significant word overlap in phrases
+                                String[] iPhraseWords = inputPhrase.trim().split("\\s+");
+                                String[] pPhraseWords = projectPhrase.trim().split("\\s+");
+                                
+                                int phraseCommonWords = 0;
+                                for (String iWord : iPhraseWords) {
+                                    if (iWord.length() > 3) {
+                                        for (String pWord : pPhraseWords) {
+                                            if (iWord.equals(pWord)) {
+                                                phraseCommonWords++;
+                                                break;
+                                            }
+                                        }
+                                    }
+                                }
+                                
+                                if (phraseCommonWords >= 3) { // At least 3 common meaningful words
+                                    commonPhrases++;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+                
+                if (commonPhrases > 0) {
+                    phraseScore = (30.0 * commonPhrases) / Math.max(inputPhrases.length, projectPhrases.length);
+                }
+            }
+        }
+        
+        double totalScore = wordOverlapScore + phraseScore;
+        
+        // Boost score for very similar descriptions
+        if (inputDesc.length() > 20 && projectDesc.length() > 20) {
+            if (calculateLevenshteinSimilarity(inputDesc, projectDesc) > 0.6) {
+                totalScore += 10; // 10% bonus for high similarity
+            }
+        }
+        
+        return Math.min(totalScore, 100); // Cap at 100%
+    }
+    
+    private double calculateLevenshteinSimilarity(String s1, String s2) {
+        int maxLen = Math.max(s1.length(), s2.length());
+        if (maxLen == 0) return 1.0;
+        
+        int distance = levenshteinDistance(s1, s2);
+        return (double) (maxLen - distance) / maxLen;
+    }
+    
+    private int levenshteinDistance(String s1, String s2) {
+        int[][] dp = new int[s1.length() + 1][s2.length() + 1];
+        
+        for (int i = 0; i <= s1.length(); i++) {
+            for (int j = 0; j <= s2.length(); j++) {
+                if (i == 0) {
+                    dp[i][j] = j;
+                } else if (j == 0) {
+                    dp[i][j] = i;
+                } else {
+                    dp[i][j] = Math.min(
+                        Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1),
+                        dp[i - 1][j - 1] + (s1.charAt(i - 1) == s2.charAt(j - 1) ? 0 : 1)
+                    );
+                }
+            }
+        }
+        
+        return dp[s1.length()][s2.length()];
     }
 }

@@ -1,4 +1,4 @@
-﻿import { Routes } from '@angular/router';
+import { Routes } from '@angular/router';
 import { LoginComponent } from './login/login';
 import { Signup } from './signup/signup';
 import { Landing } from './landing/landing';
@@ -14,10 +14,10 @@ import { CompanyHomeComponent } from './company-home/company-home';
 import { CompanyProjectsComponent } from './company-projects/company-projects';
 import { CompanyCreateProjectComponent } from './company-create-project/company-create-project';
 import { CommunityChatComponent } from './community-chat/community-chat';
+import { CommunitiesComponent } from './communities/communities';
 import { UserCreateProjectComponent } from './user-create-project/user-create-project';
-
-import { AiMatchingComponent } from './ai-matching/ai-matching.component';
 import { UserProjectsBrowseComponent } from './user-projects-browse/user-projects-browse';
+import { AiProjectMatcherComponent } from './components/ai-project-matcher.component';
 
 export const routes: Routes = [
   { path: '', component: Landing },
@@ -29,15 +29,16 @@ export const routes: Routes = [
   { path: 'projects', component: ProjectsComponent, canActivate: [authGuard] },
   { path: 'create-project', component: UserCreateProjectComponent, canActivate: [authGuard] },
   { path: 'browse-projects', component: UserProjectsBrowseComponent, canActivate: [authGuard] },
+  { path: 'ai-matching', component: AiProjectMatcherComponent, canActivate: [authGuard] },
   { path: 'notifications', component: NotificationsComponent, canActivate: [authGuard] },
   { path: 'messages', component: Messages, canActivate: [authGuard] },
-  { path: 'ai-matching', component: AiMatchingComponent, canActivate: [authGuard] },
+  { path: 'communities', component: CommunitiesComponent, canActivate: [authGuard] },
+  { path: 'community-chat', component: CommunityChatComponent, canActivate: [authGuard] },
   
   // Company routes
   { path: 'company/home', component: CompanyHomeComponent, canActivate: [authGuard] },
   { path: 'company/projects', component: CompanyProjectsComponent, canActivate: [authGuard] },
   { path: 'company/create-project', component: CompanyCreateProjectComponent, canActivate: [authGuard] },
-  { path: 'company/community-chat', component: CommunityChatComponent, canActivate: [authGuard] },
   
   { path: '**', redirectTo: '' }
 ];

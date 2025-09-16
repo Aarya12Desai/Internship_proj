@@ -66,6 +66,10 @@ public class SecurityConfig {
                 .requestMatchers(new AntPathRequestMatcher("/api/upload/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/uploads/**")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/test/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/ai-matching")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/ai/**")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/communities/public")).permitAll()
+                .requestMatchers(new AntPathRequestMatcher("/api/communities/search")).permitAll()
                 .requestMatchers(new AntPathRequestMatcher("/api/communities/**")).authenticated()
                 .requestMatchers(new AntPathRequestMatcher("/api/community-chat/**")).authenticated()
                 .requestMatchers(new AntPathRequestMatcher("/error")).permitAll() // For error pages

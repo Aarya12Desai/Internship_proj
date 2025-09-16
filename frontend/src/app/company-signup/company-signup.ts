@@ -49,6 +49,7 @@ export class CompanySignupComponent {
         // Store the JWT token and redirect to company dashboard
         if (response && response.token) {
           localStorage.setItem('access_token', response.token);
+          if (response.id) localStorage.setItem('user_id', response.id.toString());
           localStorage.setItem('user_email', response.email);
           localStorage.setItem('username', response.username);
           localStorage.setItem('user_role', response.role);
@@ -56,10 +57,19 @@ export class CompanySignupComponent {
           localStorage.setItem('company_website', response.companyWebsite);
           localStorage.setItem('company_contact_name', response.companyContactName);
           localStorage.setItem('company_contact_phone', response.companyContactPhone);
-          
+
+          // Store company community id and name for navbar chat
+          if (response.companyCommunityId) {
+            localStorage.setItem('company_community_id', response.companyCommunityId.toString());
+          }
+          if (response.companyCommunityName) {
+            localStorage.setItem('company_community_name', response.companyCommunityName);
+          }
+
           // Update auth service state
           this.auth.authState.next(true);
           this.auth.currentUser$.next({
+            id: response.id,
             email: response.email,
             username: response.username,
             role: response.role,
@@ -68,7 +78,7 @@ export class CompanySignupComponent {
             companyContactName: response.companyContactName,
             companyContactPhone: response.companyContactPhone
           });
-          
+
           setTimeout(() => this.router.navigate(['/company/home']), 1000);
         }
       },

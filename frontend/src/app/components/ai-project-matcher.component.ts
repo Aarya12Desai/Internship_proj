@@ -11,70 +11,25 @@ import { HttpClient } from '@angular/common/http';
     <div class="ai-matcher-container">
       <div class="form-header">
         <h1>AI Project Matching</h1>
-        <p>Describe your project to find relevant companies and collaborators</p>
+        <p>Describe your project and find similar projects using AI-powered matching based on description similarity</p>
       </div>
 
       <form #projectForm="ngForm" (ngSubmit)="findMatches()" class="project-form">
         <div class="form-group">
-          <label for="title">Project Title/Name *</label>
-          <input 
-            type="text" 
-            id="title" 
-            name="title"
-            [(ngModel)]="projectData.title"
-            placeholder="Enter your project title"
-            required
-            minlength="3"
-            #titleInput="ngModel"
-            [class.error]="titleInput.invalid && titleInput.touched"
-          >
-          <div *ngIf="titleInput.invalid && titleInput.touched" class="error-message">
-            Project title is required (minimum 3 characters)
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="projectType">Category / Type *</label>
-          <select 
-            id="projectType" 
-            name="projectType"
-            [(ngModel)]="projectData.projectType"
-            required
-            #typeInput="ngModel"
-            [class.error]="typeInput.invalid && typeInput.touched"
-          >
-            <option value="">Select project category</option>
-            <option value="Web App">Web App</option>
-            <option value="Mobile App">Mobile App</option>
-            <option value="Research Project">Research Project</option>
-            <option value="AI Model">AI Model</option>
-            <option value="Hardware Prototype">Hardware Prototype</option>
-            <option value="Software Tool">Software Tool</option>
-            <option value="Game Development">Game Development</option>
-            <option value="Data Analytics">Data Analytics</option>
-            <option value="IoT Solution">IoT Solution</option>
-            <option value="Other">Other</option>
-          </select>
-          <div *ngIf="typeInput.invalid && typeInput.touched" class="error-message">
-            Project category is required
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label for="shortDescription">Short Description *</label>
+          <label for="description">Project Description *</label>
           <textarea 
-            id="shortDescription" 
-            name="shortDescription"
-            [(ngModel)]="projectData.shortDescription"
-            rows="3"
-            placeholder="Brief overview of your project (elevator pitch)"
+            id="description" 
+            name="description"
+            [(ngModel)]="projectData.description"
+            rows="6"
+            placeholder="Describe your project in detail - include the problem it solves, technologies used, target audience, and what makes it unique. This will be used to find matching projects."
             required
             minlength="10"
-            #shortDescInput="ngModel"
-            [class.error]="shortDescInput.invalid && shortDescInput.touched"
+            #descriptionInput="ngModel"
+            [class.error]="descriptionInput.invalid && descriptionInput.touched"
           ></textarea>
-          <div *ngIf="shortDescInput.invalid && shortDescInput.touched" class="error-message">
-            Short description is required (minimum 10 characters)
+          <div *ngIf="descriptionInput.invalid && descriptionInput.touched" class="error-message">
+            Project description is required (minimum 10 characters)
           </div>
         </div>
 
@@ -141,7 +96,7 @@ import { HttpClient } from '@angular/common/http';
       <div *ngIf="showNoResults" class="no-results">
         <i class="fas fa-search"></i>
         <h3>No matches found</h3>
-        <p>Try adjusting your project description or technologies to find better matches.</p>
+        <p>No projects in the database match your description with sufficient similarity. Try using different keywords or describing your project in more detail.</p>
       </div>
     </div>
   `,
@@ -506,9 +461,7 @@ export class AiProjectMatcherComponent {
   showNoResults = false;
 
   projectData = {
-    title: '',
-    projectType: '',
-    shortDescription: ''
+    description: ''
   };
 
   constructor(private http: HttpClient) {}
@@ -521,17 +474,15 @@ export class AiProjectMatcherComponent {
     this.showNoResults = false;
     
     try {
-      // Prepare the project data for AI matching (no database save)
+      // Prepare the project data for AI matching using description only
       const matchingPayload = {
-        title: this.projectData.title.trim(),
-        projectType: this.projectData.projectType,
-        description: this.projectData.shortDescription.trim()
+        description: this.projectData.description.trim()
       };
 
-      // Call AI matching API endpoint (this would be a new endpoint that doesn't save to DB)
-      this.http.post<any>('http://localhost:8081/api/ai/match-projects', matchingPayload).subscribe({
+      // Call the description-only AI matching endpoint
+      this.http.post<any[]>('http://localhost:8081/api/ai-matching', matchingPayload).subscribe({
         next: (response: any) => {
-          this.matchingResults = response.matches || [];
+          this.matchingResults = response || [];
           this.showNoResults = this.matchingResults.length === 0;
           this.matchesFound.emit(this.matchingResults);
           this.isLoading = false;
@@ -586,9 +537,7 @@ export class AiProjectMatcherComponent {
 
   resetForm() {
     this.projectData = {
-      title: '',
-      projectType: '',
-      shortDescription: ''
+      description: ''
     };
     this.matchingResults = [];
     this.showNoResults = false;

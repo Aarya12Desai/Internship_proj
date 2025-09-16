@@ -48,7 +48,15 @@ export class Auth {
           if (response.companyWebsite) localStorage.setItem('company_website', response.companyWebsite);
           if (response.companyContactName) localStorage.setItem('company_contact_name', response.companyContactName);
           if (response.companyContactPhone) localStorage.setItem('company_contact_phone', response.companyContactPhone);
-          
+
+          // Store company community id and name for navbar chat
+          if (response.companyCommunityId) {
+            localStorage.setItem('company_community_id', response.companyCommunityId.toString());
+          }
+          if (response.companyCommunityName) {
+            localStorage.setItem('company_community_name', response.companyCommunityName);
+          }
+
           console.log('Authentication data stored successfully');
           console.log('Token stored:', localStorage.getItem('access_token') ? 'YES' : 'NO');
           // emit new auth state and current user
