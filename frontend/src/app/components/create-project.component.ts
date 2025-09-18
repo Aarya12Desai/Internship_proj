@@ -550,12 +550,14 @@ export class CreateProjectComponent {
       // Prepare project payload - map to the expected format
       const payload = {
         name: this.projectData.title.trim(),
-        country: 'Not specified', // Default value since backend might require it
         description: this.buildDescription(),
-        language: 'Not specified', // Default value since backend might require it
-        // Additional fields that might be used by backend
-        projectType: this.projectData.projectType,
         technologiesUsed: this.projectData.technologiesUsed,
+        domain: this.projectData.industryDomain, // Map industryDomain to domain for backend
+        image: null, // Could be added later if needed
+        // Additional fields that backend can now handle
+        language: 'Not specified',
+        country: 'Not specified', 
+        projectType: this.projectData.projectType,
         industryDomain: this.projectData.industryDomain,
         objective: this.projectData.objective,
         demoLink: this.projectData.demoLink || undefined,

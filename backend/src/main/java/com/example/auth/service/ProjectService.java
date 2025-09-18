@@ -30,16 +30,29 @@ public class ProjectService {
             .orElseThrow(() -> new RuntimeException("User not found: " + username));
         
         Project p = new Project();
-    p.setName(req.name);
-    p.setDescription(req.description);
-    p.setImage(req.image);
-    p.setTechnologiesUsed(req.technologiesUsed);
-    p.setDomain(req.domain);
-    p.setCreator(creator);
-    p.setCreatorUsername(username);
-    p.setUserId(creator.getId());
+        p.setName(req.name);
+        p.setDescription(req.description);
+        p.setImage(req.image);
+        p.setTechnologiesUsed(req.technologiesUsed);
+        p.setDomain(req.domain != null ? req.domain : req.industryDomain); // Use domain or industryDomain as fallback
+        p.setCreator(creator);
+        p.setCreatorUsername(username);
+        p.setUserId(creator.getId());
+        
+        // Log the project creation for debugging
+        System.out.println("=== PROJECT CREATION ===");
+        System.out.println("Project Name: " + req.name);
+        System.out.println("Creator Username: " + username);
+        System.out.println("Creator ID: " + creator.getId());
+        System.out.println("Description: " + req.description);
+        System.out.println("Technologies: " + req.technologiesUsed);
+        System.out.println("Domain: " + p.getDomain());
+        System.out.println("========================");
         
         Project savedProject = projectRepository.save(p);
+        
+        // Log successful save
+        System.out.println("✅ Project saved with ID: " + savedProject.getId());
         
         // Trigger AI matching after saving
         try {

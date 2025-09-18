@@ -13,6 +13,7 @@ export interface Notification {
   userName?: string;
   userId?: string;
   actionUrl?: string;
+  isCompanyConnection?: boolean;
 }
 
 @Injectable({

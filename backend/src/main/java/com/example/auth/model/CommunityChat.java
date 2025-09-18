@@ -22,7 +22,7 @@ public class CommunityChat {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(columnDefinition = "TEXT", nullable = false, length = 2000)
     private String message;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -47,13 +47,13 @@ public class CommunityChat {
     @Column(name = "community_name")
     private String communityName;
     
-    @Column(name = "created_at")
+    @Column(name = "created_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
     
-    @Column(name = "is_edited")
+    @Column(name = "is_edited", columnDefinition = "TINYINT(1) DEFAULT 0")
     private boolean isEdited = false;
     
-    @Column(name = "edited_at")
+    @Column(name = "edited_at", columnDefinition = "DATETIME")
     private LocalDateTime editedAt;
     
     @PrePersist

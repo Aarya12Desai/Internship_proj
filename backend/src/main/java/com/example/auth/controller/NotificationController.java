@@ -1,11 +1,8 @@
 
 package com.example.auth.controller;
 
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import java.util.Map;
-
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import org.springframework.http.ResponseEntity;
@@ -15,7 +12,9 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -33,7 +32,7 @@ public class NotificationController {
      * Send a notification to a user (used by frontend for connect action)
      */
     @PostMapping("/send")
-    public ResponseEntity<?> sendNotificationToUser(@RequestBody Map<String, Object> payload) {
+    public ResponseEntity<?> sendNotificationToUser(@RequestBody Map<String, Object> payload, Authentication authentication) {
         try {
             Long userId = null;
             if (payload.get("userId") instanceof Integer) {
@@ -46,10 +45,29 @@ public class NotificationController {
             String title = (String) payload.get("title");
             String message = (String) payload.get("message");
             String type = (String) payload.get("type");
+            
             if (userId == null || title == null || message == null || type == null) {
                 return ResponseEntity.badRequest().body(Map.of("error", "Missing required fields"));
             }
-            Notification notification = notificationService.createNotification(userId, title, message, type);
+            
+            // Get the sending user (company) information
+            Long companyId = null;
+            if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
+                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+                User sendingUser = userRepository.findByUsername(userDetails.getUsername()).orElse(null);
+                if (sendingUser != null) {
+                    companyId = sendingUser.getId();
+                }
+            }
+            
+            Notification notification;
+            // Use company connection notification if it's a company connecting to a project
+            if ("project_match".equalsIgnoreCase(type) && companyId != null) {
+                notification = notificationService.createCompanyConnectionNotification(userId, title, message, type, companyId);
+            } else {
+                notification = notificationService.createNotification(userId, title, message, type);
+            }
+            
             if (notification == null) {
                 return ResponseEntity.status(404).body(Map.of("error", "User not found"));
             }
@@ -97,6 +115,20 @@ public class NotificationController {
                     put("avatar", n.getMatchedProject().getCreatorUsername() != null ? n.getMatchedProject().getCreatorUsername().substring(0,2).toUpperCase() : "");
                     put("userName", n.getMatchedProject().getCreatorUsername());
                     put("userId", n.getMatchedProject().getCreator().getId());
+                }};
+            } else if ("project_match".equalsIgnoreCase(n.getType()) && n.getConnectingCompany() != null) {
+                // Company connection notification - include company details for chat navigation
+                return new java.util.HashMap<String, Object>() {{
+                    put("id", n.getId());
+                    put("type", n.getType().toLowerCase());
+                    put("title", n.getTitle());
+                    put("message", n.getMessage());
+                    put("timestamp", n.getCreatedAt());
+                    put("read", n.getIsRead());
+                    put("avatar", n.getConnectingCompany().getUsername() != null ? n.getConnectingCompany().getUsername().substring(0,2).toUpperCase() : "");
+                    put("userName", n.getConnectingCompany().getUsername());
+                    put("userId", n.getConnectingCompany().getId());
+                    put("isCompanyConnection", true);
                 }};
             } else {
                 return new java.util.HashMap<String, Object>() {{

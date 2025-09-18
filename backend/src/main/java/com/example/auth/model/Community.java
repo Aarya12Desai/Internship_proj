@@ -28,7 +28,7 @@ public class Community {
     @Column(nullable = false)
     private String name;
     
-    @Column(columnDefinition = "TEXT")
+    @Column(columnDefinition = "TEXT", length = 1000)
     private String description;
     
     @ManyToOne(fetch = FetchType.LAZY)
@@ -42,13 +42,13 @@ public class Community {
     @Column(name = "company_name")
     private String companyName;
     
-    @Column(name = "is_public")
+    @Column(name = "is_public", columnDefinition = "TINYINT(1) DEFAULT 1")
     private boolean isPublic = true;
     
-    @Column(name = "created_at")
+    @Column(name = "created_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
     
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
     
     @OneToMany(mappedBy = "community", fetch = FetchType.LAZY)

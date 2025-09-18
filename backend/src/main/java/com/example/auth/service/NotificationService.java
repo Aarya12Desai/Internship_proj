@@ -108,6 +108,44 @@ public class NotificationService {
     }
     
     /**
+     * Create a company connection notification with company details
+     */
+    public Notification createCompanyConnectionNotification(Long userId, String title, String message, 
+            String type, Long companyId) {
+        User user = userRepository.findById(userId).orElse(null);
+        if (user == null) {
+            System.out.println("Warning: Could not find user with ID: " + userId);
+            return null;
+        }
+        
+        User connectingCompany = null;
+        if (companyId != null) {
+            connectingCompany = userRepository.findById(companyId).orElse(null);
+            if (connectingCompany == null) {
+                System.out.println("Warning: Could not find company with ID: " + companyId);
+            }
+        }
+        
+        Notification notification = new Notification(user, title, message, type);
+        notification.setConnectingCompany(connectingCompany);
+        
+        Notification saved = notificationRepository.save(notification);
+        
+        // Log for debugging
+        System.out.println("=== COMPANY CONNECTION NOTIFICATION CREATED ===");
+        System.out.println("User ID: " + userId);
+        System.out.println("Company ID: " + companyId);
+        System.out.println("Company Username: " + (connectingCompany != null ? connectingCompany.getUsername() : "Unknown"));
+        System.out.println("Title: " + title);
+        System.out.println("Message: " + message);
+        System.out.println("Type: " + type);
+        System.out.println("Notification ID: " + saved.getId());
+        System.out.println("===============================================");
+        
+        return saved;
+    }
+    
+    /**
      * Get all notifications for a user
      */
     public List<Notification> getUserNotifications(Long userId) {

@@ -1,7 +1,9 @@
-import { Component, Output, EventEmitter } from '@angular/core';
+import { Component, Output, EventEmitter, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
+import { Auth } from '../services/auth';
 
 @Component({
   selector: 'app-ai-project-matcher',
@@ -464,7 +466,9 @@ export class AiProjectMatcherComponent {
     description: ''
   };
 
-  constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+  private router = inject(Router);
+  private auth = inject(Auth);
 
   async findMatches() {
     if (this.isLoading) return;
@@ -544,8 +548,56 @@ export class AiProjectMatcherComponent {
   }
 
   contactMatch(match: any) {
-    // Implement contact functionality
-    alert(`Contacting ${match.name}...`);
+    // Check if user is logged in
+    if (!this.auth.isLoggedIn) {
+      alert('Please log in to contact project creators.');
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    // Get the project creator's username for display
+    const creatorUsername = match.creator || 'Unknown Creator';
+    const projectTitle = match.title || match.name || 'Unknown Project';
+    
+    // Prompt user for a message
+    const message = prompt(`Send a message to ${creatorUsername} about their project "${projectTitle}":`);
+    
+    if (message && message.trim()) {
+      this.sendContactNotification(match, message.trim(), creatorUsername, projectTitle);
+    }
+  }
+
+  private sendContactNotification(match: any, message: string, creatorUsername: string, projectTitle: string) {
+    const token = this.auth.token;
+    if (!token) {
+      alert('Authentication required. Please log in again.');
+      return;
+    }
+
+    // Prepare notification payload
+    const notificationPayload = {
+      projectId: match.id,
+      title: 'New Project Interest',
+      message: `A user is interested in your project "${projectTitle}" and sent: "${message}"`,
+      type: 'project_match'
+    };
+
+    const headers = new HttpHeaders({
+      'Authorization': `Bearer ${token}`,
+      'Content-Type': 'application/json'
+    });
+
+    // Send notification via the backend contact API
+    this.http.post('http://localhost:8081/api/contact/project', notificationPayload, { headers })
+      .subscribe({
+        next: (response) => {
+          alert(`Message sent successfully to ${creatorUsername}!`);
+        },
+        error: (error) => {
+          console.error('Failed to send message:', error);
+          alert(`Failed to send message. Please try again later.`);
+        }
+      });
   }
 
   viewDetails(match: any) {

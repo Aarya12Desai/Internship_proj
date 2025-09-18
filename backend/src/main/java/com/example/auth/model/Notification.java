@@ -53,6 +53,11 @@ public class Notification {
     @Column(name = "match_details", columnDefinition = "TEXT")
     private String matchDetails;
     
+    // Company connection specific fields
+    @ManyToOne
+    @JoinColumn(name = "connecting_company_id")
+    private User connectingCompany;
+    
     // Constructors
     public Notification() {
         this.createdAt = Instant.now();
@@ -153,5 +158,13 @@ public class Notification {
     
     public void setMatchDetails(String matchDetails) {
         this.matchDetails = matchDetails;
+    }
+    
+    public User getConnectingCompany() {
+        return connectingCompany;
+    }
+    
+    public void setConnectingCompany(User connectingCompany) {
+        this.connectingCompany = connectingCompany;
     }
 }

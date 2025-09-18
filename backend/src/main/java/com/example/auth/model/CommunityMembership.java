@@ -50,10 +50,10 @@ public class CommunityMembership {
     @Column(name = "membership_role")
     private MembershipRole role = MembershipRole.MEMBER;
     
-    @Column(name = "joined_at")
+    @Column(name = "joined_at", columnDefinition = "DATETIME DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime joinedAt;
     
-    @Column(name = "is_active")
+    @Column(name = "is_active", columnDefinition = "TINYINT(1) DEFAULT 1")
     private boolean isActive = true;
     
     @PrePersist

@@ -1,7 +1,8 @@
-import { Component, signal } from '@angular/core';
+import { Component, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { Auth } from '../services/auth';
 
 @Component({
@@ -40,6 +41,14 @@ import { Auth } from '../services/auth';
                 <p><strong>Domain:</strong> {{ match.domain }}</p>
                 <p><strong>Technologies:</strong> {{ match.technologies }}</p>
                 <p><strong>Description:</strong> {{ match.description }}</p>
+              </div>
+              <div class="match-actions">
+                <button type="button" class="btn-contact" (click)="contactMatch(match)">
+                  📧 Contact Creator
+                </button>
+                <button type="button" class="btn-view" (click)="viewDetails(match)">
+                  👁️ View Details
+                </button>
               </div>
             </li>
           </ul>
@@ -192,5 +201,38 @@ export class AiMatchingFormComponent {
           this.loading.set(false);
         }
       });
+  }
+
+  contactMatch(projectId: number) {
+    const token = this.auth.token;
+    if (!token) {
+      alert('Please log in to contact project creators');
+      return;
+    }
+
+    const headers = new HttpHeaders({
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`
+    });
+
+    const payload = {
+      projectId: projectId,
+      message: 'I am interested in your project based on AI matching results. I would like to collaborate.'
+    };
+
+    this.http.post('http://localhost:8081/api/contact/project', payload, { headers })
+      .subscribe({
+        next: (response) => {
+          alert('Contact request sent successfully!');
+        },
+        error: (err) => {
+          alert('Failed to send contact request: ' + (err.error?.message || 'Please try again'));
+        }
+      });
+  }
+
+  viewDetails(project: any) {
+    // Navigate to project details or open modal
+    window.open(`/projects/${project.id}`, '_blank');
   }
 }
